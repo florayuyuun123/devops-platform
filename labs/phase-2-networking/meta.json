@@ -1,0 +1,9 @@
+{
+  "id": "phase-2-networking",
+  "title": "Networking, SSH & firewalls",
+  "phase": 2,
+  "phase_name": "Networking & security",
+  "difficulty": "beginner",
+  "duration_minutes": 60,
+  "description": "Understand TCP/IP, DNS, ports and SSH — diagnosed in every technical interview."
+}

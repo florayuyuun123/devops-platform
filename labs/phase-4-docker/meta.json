@@ -1,0 +1,9 @@
+{
+  "id": "phase-4-docker",
+  "title": "Docker containers & images",
+  "phase": 4,
+  "phase_name": "Docker & containers",
+  "difficulty": "intermediate",
+  "duration_minutes": 75,
+  "description": "Docker is listed in 90% of DevOps job ads. You will use this every day."
+}

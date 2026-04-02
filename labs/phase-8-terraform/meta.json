@@ -1,0 +1,9 @@
+{
+  "id": "phase-8-terraform",
+  "title": "Terraform — Infrastructure as Code",
+  "phase": 8,
+  "phase_name": "Terraform / IaC",
+  "difficulty": "advanced",
+  "duration_minutes": 90,
+  "description": "Define and provision infrastructure with code. Essential for cloud engineering roles."
+}

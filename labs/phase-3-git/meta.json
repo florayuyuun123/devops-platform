@@ -1,0 +1,9 @@
+{
+  "id": "phase-3-git",
+  "title": "Git version control & GitHub flow",
+  "phase": 3,
+  "phase_name": "Git & version control",
+  "difficulty": "beginner",
+  "duration_minutes": 60,
+  "description": "Git is used in every software team on the planet. Non-negotiable skill."
+}

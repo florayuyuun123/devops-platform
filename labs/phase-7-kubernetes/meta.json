@@ -1,0 +1,9 @@
+{
+  "id": "phase-7-kubernetes",
+  "title": "Kubernetes — deploy and manage containers at scale",
+  "phase": 7,
+  "phase_name": "Kubernetes",
+  "difficulty": "advanced",
+  "duration_minutes": 120,
+  "description": "Kubernetes carries the highest salary premium of any DevOps skill. Learn to deploy, scale and manage."
+}

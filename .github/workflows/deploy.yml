@@ -1,0 +1,65 @@
+name: Deploy Platform
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-portal:
+    name: Deploy portal to GitHub Pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: portal
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-api:
+    name: Deploy API to Koyeb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy labs into API build context
+        run: cp -r labs api/labs
+
+      - name: Install Koyeb CLI
+        run: curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+
+      - name: Deploy to Koyeb
+        run: |
+          koyeb service redeploy devops-platform-api/devops-platform-api
+        env:
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+
+  build-sandbox:
+    name: Build sandbox image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: sandbox
+          push: true
+          tags: ghcr.io/${{ github.repository }}/devops-sandbox:latest

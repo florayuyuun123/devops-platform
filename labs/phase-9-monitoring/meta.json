@@ -1,0 +1,9 @@
+{
+  "id": "phase-9-monitoring",
+  "title": "Monitoring with Prometheus & Grafana",
+  "phase": 9,
+  "phase_name": "Monitoring & observability",
+  "difficulty": "advanced",
+  "duration_minutes": 90,
+  "description": "Know what is running in production. SRE and platform roles require observability on day one."
+}

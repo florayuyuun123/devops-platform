@@ -1,0 +1,9 @@
+{
+  "id": "phase-5-cicd",
+  "title": "CI/CD pipelines with GitHub Actions",
+  "phase": 5,
+  "phase_name": "CI/CD pipelines",
+  "difficulty": "intermediate",
+  "duration_minutes": 90,
+  "description": "Automate build, test and deploy. Senior roles require pipeline ownership."
+}

@@ -1,0 +1,9 @@
+{
+  "id": "phase-10-capstone",
+  "title": "Capstone project — deploy a production-grade app",
+  "phase": 10,
+  "phase_name": "Capstone project",
+  "difficulty": "advanced",
+  "duration_minutes": 480,
+  "description": "Deploy a full application using every skill learned. This becomes your portfolio piece for interviews."
+}

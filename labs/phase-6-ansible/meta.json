@@ -1,0 +1,9 @@
+{
+  "id": "phase-6-ansible",
+  "title": "Ansible configuration management",
+  "phase": 6,
+  "phase_name": "Ansible automation",
+  "difficulty": "intermediate",
+  "duration_minutes": 90,
+  "description": "Ansible is the top tool for automating server configuration. Huge demand in hybrid cloud roles."
+}

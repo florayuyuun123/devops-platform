@@ -1,0 +1,18 @@
+# Koyeb deployment config — free tier, no credit card, no expiry
+# Deploy at: app.koyeb.com → Create service → GitHub → select this repo
+name: devops-platform-api
+type: web
+git:
+  repository: github.com/GITHUB_USER/devops-platform
+  branch: main
+  build_command: "pip install -r requirements.txt"
+  run_command: "uvicorn main:app --host 0.0.0.0 --port 8080"
+  dockerfile: api/Dockerfile
+instance_types:
+  - free
+ports:
+  - port: 8080
+    protocol: http
+health_checks:
+  - path: /health
+    port: 8080

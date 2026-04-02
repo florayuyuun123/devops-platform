@@ -1,0 +1,9 @@
+{
+  "id": "phase-1-linux",
+  "title": "Linux file system & permissions",
+  "phase": 1,
+  "phase_name": "Linux fundamentals",
+  "difficulty": "beginner",
+  "duration_minutes": 45,
+  "description": "Navigate Linux, manage files and understand permissions — the foundation of all DevOps work."
+}
