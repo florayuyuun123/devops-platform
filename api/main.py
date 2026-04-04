@@ -124,6 +124,13 @@ async def terminal_page(container_name: str):
             body = resp.content
             body = body.replace(b'src="/', 'src="/terminal/{}/'.format(container_name).encode())
             body = body.replace(b'href="/', 'href="/terminal/{}/'.format(container_name).encode())
+            # Remove any direct port references that would leak through
+            import re
+            body = re.sub(
+                b'http://localhost:[0-9]+',
+                b'',
+                body
+            )
             # Inject script to fix WebSocket URL before ttyd connects
             ws_fix = b'''<script>
 (function() {
