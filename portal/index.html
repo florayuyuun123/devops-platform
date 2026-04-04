@@ -323,7 +323,7 @@ function md(t) {
 }
 
 async function startSandbox(labId) {
-  document.getElementById('sandbox-status').textContent = 'Starting...';
+  document.getElementById('sandbox-status').textContent = 'Starting sandbox...';
   try {
     const r = await fetch(`${API}/sandbox/start`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -331,11 +331,15 @@ async function startSandbox(labId) {
     });
     const d = await r.json();
     activeSandbox = {...d, lab_id: labId};
-    openTerminal(d.terminal_path, labId);
+    // Build terminal URL using the tunnel host and the sandbox port
+    const tunnelHost = new URL(API).hostname;
+    const terminalUrl = `https://${tunnelHost}:${d.port}`;
+    openTerminal(terminalUrl, labId);
     document.getElementById('sandbox-status').textContent = 'Sandbox running';
     document.getElementById('sandbox-status').className = 'sandbox-status running';
   } catch(e) {
     document.getElementById('sandbox-status').textContent = 'Failed to start sandbox';
+    console.error('Sandbox error:', e);
   }
 }
 
@@ -346,9 +350,9 @@ async function stopSandbox(name) {
   document.getElementById('sandbox-status').className = 'sandbox-status';
 }
 
-function openTerminal(path, labId) {
+function openTerminal(url, labId) {
   document.getElementById('terminal-title').textContent = `Terminal — ${labId}`;
-  document.getElementById('terminal-frame').src = `${API}${path}`;
+  document.getElementById('terminal-frame').src = url;
   document.getElementById('terminal-panel').classList.add('open');
   document.querySelector('.content').style.paddingBottom = '360px';
 }
