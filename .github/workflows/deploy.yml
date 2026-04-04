@@ -26,7 +26,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   deploy-api:
-    name: Deploy API to Koyeb
+    name: Deploy API to Fly.io
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,14 +34,13 @@ jobs:
       - name: Copy labs into API build context
         run: cp -r labs api/labs
 
-      - name: Install Koyeb CLI
-        run: curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy to Koyeb
-        run: |
-          koyeb service redeploy devops-platform-api/devops-platform-api
+      - name: Deploy to Fly.io
+        working-directory: api
+        run: flyctl deploy --remote-only
         env:
-          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   build-sandbox:
     name: Build sandbox image

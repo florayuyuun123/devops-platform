@@ -1,0 +1,23 @@
+# Fly.io deployment config
+# Free trial: 7 days — add a virtual card (Grey.co / Chipper Cash) before day 7
+# to stay on the free tier permanently
+app = "devops-platform-api"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

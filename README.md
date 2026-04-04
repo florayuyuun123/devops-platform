@@ -5,7 +5,7 @@ Built for students with limited internet access and no expensive cloud accounts.
 
 ## Live platform
 - Portal: https://florayuyuun123.github.io/devops-platform
-- API: https://devops-platform-api-YOURNAME.koyeb.app
+- API: https://devops-platform-api.fly.dev
 
 ## Curriculum — 10 phases
 1. Linux fundamentals
@@ -32,4 +32,4 @@ curl -s https://raw.githubusercontent.com/florayuyuun123/devops-platform/main/of
 ```
 
 ## Cost: $0
-GitHub Pages (portal) + Koyeb free tier OR self-hosted with Cloudflare Tunnel (API).
+GitHub Pages (portal) + Fly.io free tier (API) + optional offline node.
