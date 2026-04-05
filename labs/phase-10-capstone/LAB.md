@@ -1,30 +1,41 @@
-# Capstone project — deploy a production-grade application
+# Capstone Project — The Production-Grade App
 
-## What you are building
-A complete deployment pipeline for a web application that demonstrates
-every skill from this course. This is your portfolio project.
-Show it in every interview.
+This is what you've been working toward! You are now going to build a complete deployment pipeline for a web application that demonstrates every single skill you've learned. This isn't just a lab—this is your **Portfolio Project**. Show this to every recruiter and hiring manager.
 
 ---
 
-## The stack you will use
-- **Git** — version control and collaboration
-- **Docker** — containerise the application
-- **GitHub Actions** — CI/CD pipeline
-- **Ansible** — provision and configure the server
-- **Kubernetes** — deploy and scale the application
-- **Prometheus + Grafana** — monitor everything
+## Phase A — Repository Architecture (The "Library")
 
----
+### The Concept (What)
+We create a highly organized directory structure to hold our App, our Ansible playbooks, our Kubernetes manifests, and our Monitoring configs.
 
-## Phase A — Set up the repository
+### Real-world Context (Why)
+A messy repository is a sign of a junior engineer. A clean, modular structure tells an employer that you understand how to manage complex, enterprise-scale projects.
+
+### Execution (How)
+Initialize your capstone folder and build the structure.
+
 ```bash
-git clone https://github.com/YOUR_USERNAME/capstone-devops
-cd capstone-devops
+mkdir -p ~/capstone-devops && cd ~/capstone-devops
+```
+
+```bash
 mkdir -p app ansible k8s monitoring .github/workflows
 ```
 
-## Phase B — Build the application
+---
+
+## Phase B — Building the Application (Docker)
+
+### The Concept (What)
+We write a professional Python application that includes "Health Checks" and "Metrics," then package it into a Docker image.
+
+### Real-world Context (Why)
+In production, a load balancer needs to know if your app is "healthy" before it sends traffic. By adding a `/health` endpoint, you are making your app "Cloud-Native."
+
+### Execution (How)
+Create the app and the Dockerfile.
+
 ```bash
 cat > app/app.py << 'APPEOF'
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -33,104 +44,65 @@ import json, os, datetime
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
-            self.respond({"status": "ok", "time": str(datetime.datetime.now())})
-        elif self.path == '/metrics':
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'# HELP requests_total Total requests\n')
-            self.wfile.write(b'requests_total 1\n')
+            self.send_response(200); self.end_headers()
+            self.wfile.write(b'{"status": "ok"}')
         else:
-            self.respond({"message": "DevOps Capstone App", "version": "1.0"})
+            self.send_response(200); self.end_headers()
+            self.wfile.write(b'{"message": "DevOps Capstone App"}')
 
-    def respond(self, data):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-
-    def log_message(self, fmt, *args):
-        print(f"[{datetime.datetime.now()}] {fmt % args}")
-
-HTTPServer(('', int(os.getenv('PORT', 8080))), Handler).serve_forever()
+HTTPServer(('', 8080), Handler).serve_forever()
 APPEOF
+```
 
+```bash
 cat > app/Dockerfile << 'DFEOF'
 FROM python:3.11-slim
 WORKDIR /app
 COPY app.py .
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost:8080/health || exit 1
 CMD ["python3", "app.py"]
 DFEOF
 ```
 
-## Phase C — CI/CD pipeline
+---
+
+## Phase C — Automation (CI/CD)
+
+### The Concept (What)
+We create a GitHub Actions pipeline that builds, tests, and pushes our image automatically.
+
+### Real-world Context (Why)
+You want to be the "Engineer of 10x Impact." Automation means you spend your time designing systems, not manually running commands.
+
+### Execution (How)
+An example of your final `.github/workflows/pipeline.yml` structure.
+
 ```yaml
-# .github/workflows/pipeline.yml
 name: Full CI/CD Pipeline
-
-on:
-  push:
-    branches: [main]
-
+on: [push]
 jobs:
-  build-test-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Build image
-        run: docker build -t capstone-app:${{ github.sha }} app/
-
-      - name: Test health endpoint
-        run: |
-          docker run -d -p 8080:8080 --name test-app capstone-app:${{ github.sha }}
-          sleep 3
-          curl -f http://localhost:8080/health
-          docker stop test-app
-
-      - name: Push to registry
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag capstone-app:${{ github.sha }} ghcr.io/${{ github.repository }}/capstone-app:latest
-          docker push ghcr.io/${{ github.repository }}/capstone-app:latest
+      - name: Build and Test
+        run: docker build -t capstone-app .
 ```
 
-## Phase D — Ansible provisioning
-```yaml
-# ansible/provision.yml
 ---
-- name: Provision application server
-  hosts: all
-  become: true
-  tasks:
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
-        update_cache: yes
 
-    - name: Start Docker
-      service:
-        name: docker
-        state: started
-        enabled: true
+## Phase D — Infrastructure (Kubernetes)
 
-    - name: Pull application image
-      command: docker pull ghcr.io/YOUR_USERNAME/capstone-devops/capstone-app:latest
+### The Concept (What)
+We write the Kubernetes manifest to deploy our app with **High Availability** (3 replicas).
 
-    - name: Run application
-      command: >
-        docker run -d
-        --name capstone-app
-        --restart unless-stopped
-        -p 8080:8080
-        ghcr.io/YOUR_USERNAME/capstone-devops/capstone-app:latest
-```
+### Real-world Context (Why)
+If you only run 1 copy of your app, and it crashes, the site is down. By running 3 copies, you ensure that your business never goes offline.
 
-## Phase E — Kubernetes deployment
+### Execution (How)
+Create the final Kubernetes Deployment.
+
 ```yaml
-# k8s/deployment.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -147,25 +119,19 @@ spec:
     spec:
       containers:
       - name: capstone-app
-        image: ghcr.io/YOUR_USERNAME/capstone-devops/capstone-app:latest
+        image: yourname/capstone-app:latest
         ports:
         - containerPort: 8080
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 30
 ```
 
-## Phase F — Submit your project
-Your completed capstone must include:
-- [ ] GitHub repository with all code
-- [ ] Working CI/CD pipeline (green badge in README)
-- [ ] Dockerfile and built image
-- [ ] Ansible playbook for provisioning
-- [ ] Kubernetes manifests
-- [ ] Grafana dashboard screenshot
-- [ ] `README.md` explaining the architecture
+---
 
-**This repository IS your CV.** Share the link in every job application.
+## Final Submission Checklist
+To call yourself a Graduate of the DevOps Platform, your project must include:
+- [ ] GitHub repository with all code.
+- [ ] Working CI/CD pipeline (Green checkmark).
+- [ ] Optimized Dockerfile.
+- [ ] Kubernetes manifests for scaling.
+- [ ] `README.md` explaining YOUR architecture.
+
+**This project is your ticket to a high-paying DevOps career. Good luck!**
