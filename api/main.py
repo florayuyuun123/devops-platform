@@ -25,11 +25,9 @@ class ProgressUpdate(BaseModel):
     completed: bool
 
 def get_port(name):
-    r = subprocess.run(["docker","port",name,"7681"], capture_output=True, text=True)
-    if r.returncode == 0 and r.stdout.strip():
-        try: return int(r.stdout.strip().split("\n")[0].split(":")[-1])
-        except: pass
-    return (SANDBOX_REGISTRY.get(name) or {}).get("port")
+    import hashlib
+    h = int(hashlib.sha1(name.encode()).hexdigest(), 16)
+    return 7700 + (h % 200)
 
 @app.post("/auth/login")
 @app.post("/auth/register")
@@ -76,9 +74,10 @@ def start_sandbox(req: SandboxRequest):
     port = 7700 + (h % 200)
     
     lp = os.path.join(LABS_PATH, req.lab_id)
-    cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","-p","{}:7681".format(port),"-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
+    cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
     if os.path.exists(lp): cmd += ["-v","{}:/home/student/lab:ro".format(lp)]
     cmd.append("devops-sandbox:latest")
+    cmd.extend(["ttyd", "-W", "-p", str(port), "bash", "--login"])
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0: raise HTTPException(status_code=500, detail=r.stderr)
     SANDBOX_REGISTRY[cn] = {"student_id":req.student_id,"lab_id":req.lab_id,"port":port,"started":int(time.time())}
