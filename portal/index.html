@@ -332,7 +332,7 @@ async function startSandbox(labId) {
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Failed to start sandbox');
     activeSandbox = {...d, lab_id: labId};
-    openTerminal(d.terminal_path, labId);
+    openTerminal(API + d.terminal_path, labId);
     document.getElementById('sandbox-status').textContent = 'Sandbox running';
     document.getElementById('sandbox-status').className = 'sandbox-status running';
   } catch(e) {
