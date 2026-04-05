@@ -6,80 +6,78 @@
 <title>DevOps Learning Platform</title>
 <style>
   :root {
-    --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a;
-    --accent:#4f8ef7; --accent2:#38d9a9;
-    --text:#e2e8f0; --muted:#8892a4; --border:#2d3350;
-    --danger:#f56565; --success:#48bb78; --warning:#ed8936;
+    --bg:#0b0e14; --surface:rgba(26, 29, 39, 0.85); --surface2:rgba(34, 38, 58, 0.4);
+    --accent:#6366f1; --accent2:#10b981;
+    --text:#f8fafc; --muted:#94a3b8; --border:rgba(255, 255, 255, 0.1);
+    --danger:#ef4444; --success:#22c55e; --warning:#f59e0b;
+    --glass:blur(12px) saturate(180%);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-  .logo{font-size:18px;font-weight:700;color:var(--accent);}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+  header{background:rgba(15, 17, 23, 0.8);backdrop-filter:var(--glass);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;z-index:100;}
+  .logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--accent);}
   .logo span{color:var(--accent2);}
-  .btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:500;transition:opacity .2s;}
-  .btn:hover{opacity:.85;}
-  .btn-primary{background:var(--accent);color:#fff;}
-  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);display:inline-flex;align-items:center;gap:8px;}
+  .btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+  .btn-primary{background:linear-gradient(135deg, var(--accent), #4f46e5);color:#fff;box-shadow:0 4px 12px rgba(99, 102, 241, 0.3);}
+  .btn-ghost{background:rgba(255, 255, 255, 0.05);color:var(--text);border:1px solid var(--border);}
   .btn-sm{padding:6px 14px;font-size:13px;}
-  .btn-success{background:var(--success);color:#fff;}
+  .btn-success{background:linear-gradient(135deg, var(--accent2), #059669);color:#fff;}
   .btn-danger{background:var(--danger);color:#fff;}
 
-  #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;}
-  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:100%;max-width:420px;}
-  .login-card h1{font-size:24px;margin-bottom:8px;}
-  .login-card p{color:var(--muted);font-size:14px;margin-bottom:32px;}
-  .form-group{margin-bottom:16px;}
-  .form-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
-  .form-group input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:15px;}
-  .form-group input:focus{outline:none;border-color:var(--accent);}
-  .form-error{color:var(--danger);font-size:13px;margin-top:8px;}
+  #login-screen{position:fixed;inset:0;background:var(--bg);background-image:radial-gradient(circle at 50% 50%, #1e1b4b 0%, #0b0e14 100%);display:flex;align-items:center;justify-content:center;z-index:1000;}
+  .login-card{background:var(--surface);backdrop-filter:var(--glass);border:1px solid var(--border);border-radius:24px;padding:48px;width:100%;max-width:440px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);}
+  .login-card h1{font-size:28px;margin-bottom:8px;font-weight:800;letter-spacing:-1px;}
+  .login-card p{color:var(--muted);font-size:15px;margin-bottom:32px;}
+  .form-group{margin-bottom:20px;}
+  .form-group label{display:block;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:8px;}
+  .form-group input{width:100%;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:16px;transition:border-color 0.2s;}
+  .form-group input:focus{outline:none;border-color:var(--accent);background:rgba(0,0,0,0.3);}
 
-  #app-screen{display:none;}
-  .main-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 60px);}
-  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;}
-  .sidebar-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 16px 4px;}
-  .phase-header{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:background .15s;}
-  .phase-header:hover{background:var(--surface2);color:var(--text);}
-  .phase-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;}
-  .phase-dot.active{background:var(--accent);}
-  .phase-dot.done{background:var(--success);}
-  .lab-item{padding:7px 16px 7px 32px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--muted);transition:background .15s;}
-  .lab-item:hover{background:var(--surface2);color:var(--text);}
-  .lab-item.selected{background:var(--accent)22;color:var(--accent);}
+  #app-screen{flex:1;display:none;position:relative;}
+  .main-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 64px);}
+  .sidebar{background:rgba(15, 17, 23, 0.4);border-right:1px solid var(--border);padding:24px 0;overflow-y:auto;}
+  .sidebar-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:0 20px 12px;}
+  .phase-header{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);transition:all .2s;}
+  .phase-header:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+  .phase-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all 0.3s;}
+  .phase-dot.active{background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .lab-item{padding:8px 20px 8px 38px;margin:2px 12px;border-radius:10px;cursor:pointer;font-size:13.5px;color:var(--muted);transition:all .2s;}
+  .lab-item:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+  .lab-item.selected{background:rgba(99, 102, 241, 0.15);color:var(--accent);font-weight:600;}
 
-  .content{overflow-y:auto;}
-  .content-inner{max-width:860px;padding:32px 40px;}
+  .content{overflow-y:auto;background:#0f1117;}
+  .content-inner{max-width:900px;padding:48px 64px;margin:0 auto;}
 
-  .lab-title{font-size:26px;font-weight:700;margin-bottom:10px;}
-  .lab-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
-  .badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
-  .badge-phase{background:var(--accent)22;color:var(--accent);}
-  .badge-time{background:var(--surface2);color:var(--muted);}
-  .badge-level{background:var(--success)22;color:var(--success);}
+  .lab-title{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:12px;}
+  .lab-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+  .badge{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:0.3px;}
+  .badge-phase{background:rgba(99, 102, 241, 0.1);color:var(--accent);border:1px solid rgba(99, 102, 241, 0.2);}
 
-  .action-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;padding:14px 16px;background:var(--surface);border-radius:12px;border:1px solid var(--border);}
-  .sandbox-status{font-size:13px;color:var(--muted);margin-left:auto;}
-  .sandbox-status.running{color:var(--success);}
+  .action-bar{display:flex;gap:16px;align-items:center;margin-bottom:32px;padding:20px;background:var(--surface);backdrop-filter:var(--glass);border-radius:20px;border:1px solid var(--border);}
+  .sandbox-status{font-size:14px;font-weight:500;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .sandbox-status.running::before{content:'';width:8px;height:8px;background:var(--success);border-radius:50%;box-shadow:0 0 12px var(--success);}
 
-  .lab-content{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;line-height:1.75;font-size:15px;}
-  .lab-content h1{font-size:22px;margin-bottom:8px;color:var(--accent2);}
-  .lab-content h2{font-size:17px;margin-top:28px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-  .lab-content h3{font-size:15px;margin-top:20px;margin-bottom:8px;color:var(--accent);}
-  .lab-content p{margin-bottom:14px;}
-  .lab-content code{background:var(--surface2);border:1px solid var(--border);padding:2px 7px;border-radius:5px;font-family:'Fira Code',monospace;font-size:13px;color:var(--accent2);}
-  .lab-content pre{background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:18px 20px;overflow-x:auto;margin:14px 0;}
-  .lab-content pre code{background:none;border:none;padding:0;font-size:14px;color:#e2e8f0;line-height:1.6;}
-  .lab-content ul,.lab-content ol{padding-left:22px;margin-bottom:14px;}
-  .lab-content li{margin-bottom:6px;}
-  .lab-content strong{color:var(--accent2);}
-  .lab-content blockquote{border-left:3px solid var(--accent);padding:8px 16px;margin:14px 0;color:var(--muted);}
+  .lab-content{line-height:1.8;font-size:16px;color:#cbd5e1;}
+  .lab-content h1{font-size:28px;margin:40px 0 20px;color:var(--text);font-weight:800;letter-spacing:-0.5px;}
+  .lab-content h2{font-size:22px;margin:32px 0 16px;color:var(--text);font-weight:700;border-bottom:1px solid var(--border);padding-bottom:8px;}
+  .lab-content h3{font-size:18px;margin:24px 0 12px;color:var(--accent);font-weight:600;}
+  .lab-content p{margin-bottom:20px;}
+  .lab-content pre{background:#020617;border:1px solid var(--border);border-radius:14px;padding:24px;margin:20px 0;position:relative;}
+  .lab-content pre:hover .copy-btn{opacity:1;}
+  .lab-content pre code{font-family:'Fira Code','JetBrains Mono',monospace;font-size:14px;color:#e2e8f0;}
 
-  .terminal-panel{position:fixed;bottom:0;left:0;right:0;height:360px;background:#0d1117;border-top:2px solid var(--accent);z-index:200;display:none;flex-direction:column;}
+  .copy-btn{position:absolute;top:12px;right:12px;padding:6px 12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;opacity:0;transition:all 0.2s;}
+  .copy-btn:hover{background:rgba(255,255,255,0.2);color:#fff;}
+  .copy-btn.copied{background:var(--success);color:#fff;border-color:var(--success);}
+
+  .terminal-panel{position:fixed;bottom:0;left:0;right:0;height:40vh;background:#020617;border-top:1px solid var(--border);z-index:200;display:none;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,0.5);}
   .terminal-panel.open{display:flex;}
-  .terminal-topbar{display:flex;align-items:center;padding:6px 16px;background:var(--surface);border-bottom:1px solid var(--border);gap:12px;}
-  .terminal-title{font-size:13px;font-weight:500;color:var(--accent2);}
-  .terminal-close{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;}
-  .terminal-frame{flex:1;border:none;background:#0d1117;}
+  .terminal-resizer{height:6px;background:transparent;cursor:ns-resize;position:absolute;top:-3px;left:0;right:0;z-index:210;}
+  .terminal-resizer:hover{background:var(--accent);transition:0.3s;}
+  .terminal-topbar{height:40px;display:flex;align-items:center;padding:0 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border);}
+  .terminal-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .terminal-frame{flex:1;border:none;background:transparent;}
 
   .welcome-screen{padding:40px 0 16px;}
   .welcome-screen h1{font-size:30px;font-weight:700;margin-bottom:10px;}
@@ -149,6 +147,7 @@
 </div>
 
 <div class="terminal-panel" id="terminal-panel">
+  <div class="terminal-resizer" id="terminal-resizer"></div>
   <div class="terminal-topbar">
     <div class="terminal-title" id="terminal-title">Terminal</div>
     <button class="terminal-close" onclick="closeTerminal()">×</button>
@@ -254,19 +253,35 @@ function showWelcome() {
 function showPhase(phaseId) {
   const ph = PHASES.find(p => p.id === phaseId);
   const labs = allLabs.filter(l => l.id && l.id.startsWith(phaseId));
+  
+  // Custom Phase Intros (The Big Picture)
+  const intros = {
+    'phase-1-linux': 'Linux is the backbone of the cloud. Every server at Google, Amazon, and Netflix runs on Linux. To be a DevOps Engineer, you must speak the language of the kernel.',
+    'phase-6-ansible': 'Stop configuring servers one by one. Ansible allows you to define your entire infrastructure as code, ensuring 1000 servers are as easy to manage as one.',
+  };
+
   document.getElementById('main-content').innerHTML = `
-    <div style="padding:32px 0 16px">
-      <h2 style="font-size:22px;margin-bottom:8px">${ph.title}</h2>
-      <p style="color:var(--muted);margin-bottom:24px">${labs.length} lab(s)</p>
+    <div style="padding:40px 0">
+      <div class="badge badge-phase" style="margin-bottom:16px">Phase ${PHASES.indexOf(ph)+1} Overview</div>
+      <h1 class="lab-title" style="margin-bottom:24px">${ph.title}</h1>
+      
+      <div class="lab-content" style="background:var(--surface2); border:1px solid var(--border); padding:32px; border-radius:24px; margin-bottom:48px; backdrop-filter:var(--glass);">
+        <h3 style="margin-top:0; color:var(--accent2)">The Big Picture</h3>
+        <p style="font-size:18px; line-height:1.6; color:var(--text)">${intros[phaseId] || 'Master the core concepts of this phase to build your DevOps foundation.'}</p>
+      </div>
+
+      <h2 style="font-size:20px; font-weight:700; margin-bottom:24px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Available Labs</h2>
+      <div class="phase-cards">
       ${labs.map(l => `
-        <div class="phase-card" onclick="showLab('${l.id}')" style="margin-bottom:12px">
-          <div class="phase-card-title">${l.title}</div>
-          <div class="phase-card-desc" style="margin-top:6px">${l.description||''}</div>
-          <div style="margin-top:10px;display:flex;gap:8px">
+        <div class="phase-card" onclick="showLab('${l.id}')">
+          <div class="phase-card-title" style="font-size:16px">${l.title}</div>
+          <div class="phase-card-desc" style="margin-top:8px">${l.description||'Deep dive into this topic.'}</div>
+          <div style="margin-top:16px;display:flex;gap:8px">
             <span class="badge badge-time">${l.duration_minutes||60} min</span>
             <span class="badge badge-level">${l.difficulty||'beginner'}</span>
           </div>
         </div>`).join('') || '<p style="color:var(--muted)">Labs coming soon.</p>'}
+      </div>
     </div>`;
 }
 
@@ -311,7 +326,10 @@ function renderLab(lab) {
 function md(t) {
   if (!t) return '';
   return t
-    .replace(/```[\w]*\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/```[\w]*\n([\s\S]*?)```/g, (m, c) => {
+      const code = c.trim();
+      return `<pre><code>${c}</code><button class="copy-btn" onclick="copyCode(this, \`${btoa(code)}\`)">Copy</button></pre>`;
+    })
     .replace(/^### (.+)$/gm,'<h3>$1</h3>')
     .replace(/^## (.+)$/gm,'<h2>$1</h2>')
     .replace(/^# (.+)$/gm,'<h1>$1</h1>')
@@ -321,6 +339,42 @@ function md(t) {
     .replace(/\n\n/g,'</p><p>')
     .replace(/^(?!<)/gm,'<p>');
 }
+
+function copyCode(btn, base64) {
+  const code = atob(base64);
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Resizable terminal logic
+let isResizing = false;
+const resizer = document.getElementById('terminal-resizer');
+const panel = document.getElementById('terminal-panel');
+
+resizer.addEventListener('mousedown', e => {
+  isResizing = true;
+  document.body.style.cursor = 'ns-resize';
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isResizing) return;
+  const height = window.innerHeight - e.clientY;
+  if (height > 100 && height < window.innerHeight * 0.8) {
+    panel.style.height = height + 'px';
+    document.querySelector('.content').style.paddingBottom = height + 'px';
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  isResizing = false;
+  document.body.style.cursor = 'default';
+});
 
 async function startSandbox(labId) {
   document.getElementById('sandbox-status').textContent = 'Starting sandbox...';
@@ -352,7 +406,9 @@ function openTerminal(url, labId) {
   document.getElementById('terminal-title').textContent = `Terminal — ${labId}`;
   document.getElementById('terminal-frame').src = url;
   document.getElementById('terminal-panel').classList.add('open');
-  document.querySelector('.content').style.paddingBottom = '360px';
+  const height = parseInt(panel.style.height) || 400;
+  panel.style.height = height + 'px';
+  document.querySelector('.content').style.paddingBottom = height + 'px';
 }
 
 function closeTerminal() {
