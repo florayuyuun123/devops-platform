@@ -332,31 +332,7 @@ EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 EOF
 
-cat > api/fly.toml << 'EOF'
-# Fly.io deployment config
-# Free trial: 7 days — add a virtual card (Grey.co / Chipper Cash) before day 7
-# to stay on the free tier permanently
-app = "devops-platform-api"
-primary_region = "lhr"
 
-[build]
-  dockerfile = "Dockerfile"
-
-[env]
-  PORT = "8080"
-
-[http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = true
-  auto_start_machines = true
-  min_machines_running = 0
-
-[[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
-  cpus = 1
-EOF
 
 log "API backend written"
 
@@ -524,7 +500,7 @@ cat > portal/index.html << 'HTMLEOF'
 </div>
 
 <script>
-const API = 'https://devops-platform-api.fly.dev';
+const API = 'https://placeholder.trycloudflare.com';
 let currentUser = null, currentToken = null, allLabs = [], activeSandbox = null;
 
 const PHASES = [
@@ -1906,23 +1882,6 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-  deploy-api:
-    name: Deploy API to Fly.io
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Copy labs into API build context
-        run: cp -r labs api/labs
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy to Fly.io
-        working-directory: api
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
   build-sandbox:
     name: Build sandbox image
     runs-on: ubuntu-latest
@@ -2052,7 +2011,6 @@ Built for students with limited internet access and no expensive cloud accounts.
 
 ## Live platform
 - Portal: https://${GITHUB_USER}.github.io/devops-platform
-- API: https://devops-platform-api.fly.dev
 
 ## Curriculum — 10 phases
 1. Linux fundamentals
@@ -2079,90 +2037,18 @@ curl -s https://raw.githubusercontent.com/${GITHUB_USER}/devops-platform/main/of
 \`\`\`
 
 ## Cost: \$0
-GitHub Pages (portal) + Fly.io free tier (API) + optional offline node.
+GitHub Pages (portal) + Local API over Tunnel + optional offline node.
 READMEEOF
 
 cat > SETUP.md << 'SETUPEOF'
 # Setup Guide
 
-## Accounts you need (both free, no card for first 7 days)
+## Accounts you need
 - GitHub: github.com
-- Fly.io: fly.io — sign up with email only
-
-> IMPORTANT: Fly.io gives a 7-day free trial.
-> Before day 7 add a virtual card to stay free permanently.
-> Get a free virtual Mastercard from Grey.co or Chipper Cash (Africa).
-> Oracle charges $1 to verify then refunds it immediately.
 
 ---
 
-## Step 1 — Install the Fly CLI
-
-On WSL / Ubuntu / Linux:
-```bash
-curl -L https://fly.io/install.sh | sh
-echo 'export FLYCTL_INSTALL="/home/$USER/.fly"' >> ~/.bashrc
-echo 'export PATH="$FLYCTL_INSTALL/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-On Windows (PowerShell):
-```powershell
-pwsh -Command "iwr https://fly.io/install.ps1 -useb | iex"
-```
-
-Verify:
-```bash
-fly version
-```
-
----
-
-## Step 2 — Log in to Fly.io
-
-```bash
-fly auth login
-# Opens browser — log in and authorise
-```
-
----
-
-## Step 3 — Create the Fly.io app (one time only)
-
-```bash
-cd api
-fly launch --name devops-platform-api --region lhr --no-deploy
-# When asked "overwrite fly.toml?" → YES
-# When asked "create a PostgreSQL database?" → NO
-# When asked "create an Upstash Redis database?" → NO
-cd ..
-```
-
-This registers your app on Fly.io and links it to the fly.toml config.
-
----
-
-## Step 4 — Get your Fly.io deploy token
-
-```bash
-fly tokens create deploy -x 999999h
-# Copy the token printed — it starts with: FlyV1 ...
-```
-
----
-
-## Step 5 — Add token to GitHub Secrets
-
-1. Go to your GitHub repository
-2. Click Settings → Secrets and variables → Actions
-3. Click New repository secret
-4. Name:  FLY_API_TOKEN
-5. Value: paste the token from Step 4
-6. Click Add secret
-
----
-
-## Step 6 — Enable GitHub Pages
+## Step 1 — Enable GitHub Pages
 
 1. Go to your GitHub repository
 2. Click Settings → Pages
@@ -2171,7 +2057,7 @@ fly tokens create deploy -x 999999h
 
 ---
 
-## Step 7 — Deploy everything
+## Step 2 — Deploy the platform portal
 
 ```bash
 git add .
@@ -2180,21 +2066,8 @@ git push origin main
 ```
 
 Go to the Actions tab on GitHub — watch the pipeline run.
-In about 3 minutes:
-- Portal live at: https://YOUR_USERNAME.github.io/devops-platform
-- API live at:    https://devops-platform-api.fly.dev
-
----
-
-## Step 8 — Get a virtual card before day 7 (keep Fly.io free forever)
-
-1. Download Grey.co app (Nigeria, Ghana, Kenya and more)
-   OR Chipper Cash (available across Africa)
-2. Sign up with your phone number and ID
-3. Create a virtual Mastercard — $0 balance is fine
-4. Go to fly.io → Account Settings → Billing
-5. Add the virtual card
-6. Your account stays on the free tier permanently — no charges
+In about 3 minutes, your Portal will be live at:
+https://YOUR_USERNAME.github.io/devops-platform
 
 ---
 
@@ -2247,7 +2120,7 @@ if [[ "$PUSH_NOW" =~ ^[Yy]$ ]]; then
   log "Pushed to GitHub. Check the Actions tab in ~30 seconds."
   echo ""
   echo -e "  Portal will be live at: ${CYAN}https://${GITHUB_USER}.github.io/devops-platform${NC}"
-  echo -e "  API will be live at:    ${CYAN}https://devops-platform-api.fly.dev${NC}"
+  echo -e "  API will be live at:    ${CYAN}https://placeholder.trycloudflare.com${NC}"
 else
   echo ""
   info "When ready, push manually:"

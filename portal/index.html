@@ -330,11 +330,9 @@ async function startSandbox(labId) {
       body: JSON.stringify({student_id: currentUser, lab_id: labId})
     });
     const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Failed to start sandbox');
     activeSandbox = {...d, lab_id: labId};
-    // Build terminal URL using the tunnel host and the sandbox port
-    const tunnelHost = new URL(API).hostname;
-    const terminalUrl = `https://${tunnelHost}:${d.port}`;
-    openTerminal(terminalUrl, labId);
+    openTerminal(d.terminal_path, labId);
     document.getElementById('sandbox-status').textContent = 'Sandbox running';
     document.getElementById('sandbox-status').className = 'sandbox-status running';
   } catch(e) {

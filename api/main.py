@@ -69,7 +69,12 @@ def start_sandbox(req: SandboxRequest):
     cn = "sb_{}_{}".format(req.student_id, req.lab_id).replace("-","_")
     if subprocess.run(["docker","ps","-q","-f","name={}".format(cn)], capture_output=True, text=True).stdout.strip():
         return {"status":"already_running","container":cn,"port":get_port(cn),"terminal_path":"/terminal/{}".format(cn)}
-    port = 7700 + (abs(hash(cn)) % 200)
+    
+    subprocess.run(["docker","rm","-f",cn], capture_output=True)
+    import hashlib
+    h = int(hashlib.sha1(cn.encode()).hexdigest(), 16)
+    port = 7700 + (h % 200)
+    
     lp = os.path.join(LABS_PATH, req.lab_id)
     cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","-p","{}:7681".format(port),"--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
     if os.path.exists(lp): cmd += ["-v","{}:/home/student/lab:ro".format(lp)]
