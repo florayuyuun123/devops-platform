@@ -76,7 +76,7 @@ def start_sandbox(req: SandboxRequest):
     port = 7700 + (h % 200)
     
     lp = os.path.join(LABS_PATH, req.lab_id)
-    cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","-p","{}:7681".format(port),"--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
+    cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","-p","{}:7681".format(port),"-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
     if os.path.exists(lp): cmd += ["-v","{}:/home/student/lab:ro".format(lp)]
     cmd.append("devops-sandbox:latest")
     r = subprocess.run(cmd, capture_output=True, text=True)
