@@ -8,7 +8,7 @@ app = FastAPI(title="DevOps Learning Platform", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 SESSIONS, SANDBOX_REGISTRY = {}, {}
-LABS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "labs")
+LABS_PATH = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "labs")))
 
 class AuthRequest(BaseModel):
     username: str
