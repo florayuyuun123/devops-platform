@@ -30,7 +30,9 @@ RUN curl -Lo /usr/local/bin/ttyd \
 RUN useradd -m -s /bin/bash student \
     && echo "student:devops2024" | chpasswd \
     && usermod -aG sudo student \
-    && echo "student ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    && echo "student ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && echo "alias ls='ls --color=auto'" >> /home/student/.bashrc \
+    && echo "export PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ '" >> /home/student/.bashrc
 
 COPY welcome.sh /etc/profile.d/welcome.sh
 RUN chmod +x /etc/profile.d/welcome.sh
