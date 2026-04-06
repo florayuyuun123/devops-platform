@@ -314,23 +314,30 @@ function togglePhase(id) {
 let activeLab = null;
 
 async function showLab(id) {
-  const lab = allLabs.find(l => l.id === id);
-  if (!lab) return;
-  activeLab = lab;
+  document.getElementById('main-content').innerHTML = '<div class="loading"><div class="spinner"></div> Loading lab...</div>';
   
-  // Refresh active sandbox check
+  // 1. Refresh active sandbox check (Sync FIRST)
   try {
     const r = await fetch(`${API}/sandbox/active`);
     const d = await r.json();
     const match = d.sandboxes.find(s => s.name.includes(currentUser.toLowerCase()));
     if (match) {
-      activeSandbox = { container: match.name, lab_id: id }; // Simplistic sync
+      activeSandbox = { container: match.name, lab_id: id }; 
     } else {
       activeSandbox = null;
     }
-  } catch(e) {}
-  
-  renderLab(lab);
+  } catch(e) { activeSandbox = null; }
+
+  // 2. Fetch full lab details (including Content)
+  try {
+    const r = await fetch(`${API}/labs/${id}`);
+    const lab = await r.json();
+    activeLab = lab;
+    selectedLabId = id;
+    renderLab(lab);
+  } catch(e) {
+    document.getElementById('main-content').innerHTML = '<div style="padding:32px 0;color:var(--muted)">Start a sandbox to read this lab offline.</div>';
+  }
 }
 
 function showWelcome() {
@@ -423,7 +430,13 @@ function startTimer(duration) {
   const el = document.getElementById('lab-timer');
   timerInterval = setInterval(() => {
     const remaining = target - Math.floor(Date.now()/1000);
-    if (remaining <= 0) { el.textContent = "00:00"; el.classList.add('warning'); clearInterval(timerInterval); return; }
+    if (remaining <= 0) { 
+      el.textContent = "00:00"; el.classList.add('warning'); 
+      clearInterval(timerInterval); 
+      alert("⚠️ TIME EXPIRED: This lab session has ended. Your sandbox will be automatically terminated.");
+      stopSandbox(activeSandbox.container, true); // Use force parameter
+      return; 
+    }
     const m = Math.floor(remaining/60), s = remaining%60;
     el.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     if (remaining < 300) el.classList.add('warning');
@@ -564,8 +577,8 @@ async function startSandbox(labId) {
   }
 }
 
-async function stopSandbox(name) {
-  if (!confirm('This will destroy your sandbox container. Are you sure?')) return;
+async function stopSandbox(name, force = false) {
+  if (!force && !confirm('This will destroy your sandbox container. Are you sure?')) return;
   try {
     const r = await fetch(`${API}/sandbox/${name}`, { method: 'DELETE' });
     if (r.ok) {
@@ -573,7 +586,7 @@ async function stopSandbox(name) {
       terminalTabs = [];
       document.getElementById('terminal-body').innerHTML = '';
       closeTerminal();
-      renderLab(activeLab);
+      if (activeLab) renderLab(activeLab);
     }
   } catch (e) { console.error('Stop error:', e); }
 }
