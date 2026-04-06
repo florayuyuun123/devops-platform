@@ -280,8 +280,14 @@ function renderSidebar() {
         <div class="phase-arrow">▶</div>
       </div>
       <div class="lab-list">
-        ${labs.map(l => `<div class="lab-item ${selectedLabId === l.id ? 'selected' : ''}" id="nav-${l.id}"
-          onclick="showLab('${l.id}')">${l.title}</div>`).join('')}
+        ${labs.map(l => {
+          const progress = JSON.parse(localStorage.getItem('progress_' + l.id) || '{}');
+          const isDone = Object.values(progress).every(v => v === true) && Object.keys(progress).length > 0;
+          return `<div class="lab-item ${selectedLabId === l.id ? 'selected' : ''}" id="nav-${l.id}"
+            onclick="showLab('${l.id}')">
+            ${l.title} ${isDone ? '<span style="color:var(--success);margin-left:auto;">✓</span>' : ''}
+          </div>`;
+        }).join('')}
         ${labs.length === 0 ? '<div style="padding:10px 48px;font-size:12px;color:var(--muted)">Labs coming soon</div>' : ''}
       </div>
     </div>`;
@@ -377,17 +383,48 @@ function renderLab(lab) {
       <span class="badge badge-time">${lab.duration_minutes} min</span>
       <span class="badge badge-level">${lab.difficulty}</span>
     </div>
-    <div class="action-bar">
-      <button class="btn btn-success btn-sm" onclick="startSandbox('${lab.id}')">
-        ${running ? 'Open terminal' : 'Start sandbox'}
-      </button>
-      ${running ? `<button class="btn btn-danger btn-sm"
-        onclick="stopSandbox('${activeSandbox.container}')">Stop</button>` : ''}
-      <span class="sandbox-status ${running?'running':''}" id="sandbox-status">
-        ${running ? 'Sandbox running' : 'No active sandbox'}
-      </span>
+     <div class="action-bar">
+       <button class="btn btn-success btn-sm" onclick="startSandbox('${lab.id}')">
+         ${running ? 'Open terminal' : 'Start sandbox'}
+       </button>
+       ${running ? `<button class="btn btn-danger btn-sm"
+         onclick="stopSandbox('${activeSandbox.container}')">Stop sandbox</button>` : ''}
+       <span class="sandbox-status ${running?'running':''}" id="sandbox-status">
+         ${running ? 'Sandbox running' : 'No active sandbox'}
+       </span>
+     </div>
+     <div class="lab-content">${md(lab.content || lab.description || '')}</div>
+     <div id="lab-progress" class="progress-section"></div>`;
+     renderProgress(lab.id);
+}
+
+function renderProgress(labId) {
+  const container = document.getElementById('lab-progress');
+  if (!container) return;
+  const progress = JSON.parse(localStorage.getItem('progress_' + labId) || '{}');
+  const tasks = ['Setup environment', 'Execute commands', 'Verify results']; // Mock tasks for MVP, can be meta-driven later
+  
+  container.innerHTML = `
+    <div style="margin-top:40px;padding:24px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:16px;">
+      <h3 style="margin-top:0;font-size:14px;color:var(--text)">Lesson Checklist</h3>
+      ${tasks.map((t, i) => `
+        <div style="display:flex;align-items:center;gap:12px;margin:12px 0;cursor:pointer;" onclick="toggleTask('${labId}', '${i}')">
+          <div style="width:18px;height:18px;border:1px solid ${progress[i] ? 'var(--success)' : 'var(--border)'};border-radius:4px;display:flex;align-items:center;justify-content:center;background:${progress[i]?'var(--success)':'transparent'}">
+            ${progress[i] ? '<span style="color:#fff;font-size:12px">✓</span>' : ''}
+          </div>
+          <span style="font-size:13.5px;color:${progress[i] ? 'var(--muted)' : 'var(--text)'};${progress[i]?'text-decoration:line-through':''}">${t}</span>
+        </div>
+      `).join('')}
     </div>
-    <div class="lab-content">${md(lab.content || lab.description || '')}</div>`;
+  `;
+}
+
+function toggleTask(labId, taskId) {
+  const progress = JSON.parse(localStorage.getItem('progress_' + labId) || '{}');
+  progress[taskId] = !progress[taskId];
+  localStorage.setItem('progress_' + labId, JSON.stringify(progress));
+  renderProgress(labId);
+  renderSidebar();
 }
 
 function md(t) {
@@ -499,6 +536,20 @@ async function startSandbox(labId) {
     document.getElementById('sandbox-status').textContent = 'Failed to start sandbox';
     console.error('Sandbox error:', e);
   }
+}
+
+async function stopSandbox(name) {
+  if (!confirm('This will destroy your sandbox container. Are you sure?')) return;
+  try {
+    const r = await fetch(`${API}/sandbox/${name}`, { method: 'DELETE' });
+    if (r.ok) {
+      activeSandbox = null;
+      terminalTabs = [];
+      document.getElementById('terminal-body').innerHTML = '';
+      closeTerminal();
+      showLab(selectedLabId);
+    }
+  } catch (e) { console.error('Stop error:', e); }
 }
 
 function addTab(url, title) {

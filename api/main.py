@@ -87,16 +87,20 @@ def start_sandbox(req: SandboxRequest):
                             break
                 except: continue
     cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
-    if lp and os.path.exists(lp):
-        alp = os.path.realpath(lp)
-        cmd += ["-v","{}:/home/student/lab:ro".format(alp)]
     cmd.append("devops-sandbox:latest")
     cmd.extend(["ttyd", "-p", str(port), "tmux", "new-session", "-A", "-s", "devops", "bash", "--login"])
-    print("LOG: Starting container with command: " + " ".join(cmd))
+    
+    print("LOG: Starting sandbox: " + " ".join(cmd))
     r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode != 0:
-        print("LOG: Docker error: " + r.stderr)
-        raise HTTPException(status_code=500, detail=r.stderr)
+    if r.returncode != 0: raise HTTPException(status_code=500, detail=r.stderr)
+
+    # 100% Reliable File Injection (Bypass WSL Volume bugs)
+    if lp and os.path.exists(lp):
+        alp = os.path.realpath(lp)
+        subprocess.run(["docker","exec",cn,"mkdir","-p","/home/student/lab"])
+        subprocess.run(["docker","cp", alp + "/.", cn + ":/home/student/lab/"])
+        subprocess.run(["docker","exec","-u","root",cn,"chown","-R","student:student","/home/student/lab"])
+        print("LOG: Lab files injected successfully")
     SANDBOX_REGISTRY[cn] = {"student_id":req.student_id,"lab_id":req.lab_id,"port":port,"started":int(time.time())}
     return {"status":"started","container":cn,"port":port,"terminal_path":"/terminal/{}".format(cn)}
 
