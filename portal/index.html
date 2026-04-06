@@ -350,7 +350,8 @@ async function syncActiveSandbox(targetLabId) {
       activeSandbox = { 
         container: match.name, 
         lab_id: targetLabId || match.lab_id, 
-        started: match.started 
+        started: match.started,
+        terminal_path: match.terminal_path || `/terminal/${match.name}`
       };
     } else {
       activeSandbox = null;
@@ -472,14 +473,15 @@ async function pollProgress(labId) {
   if (!activeSandbox) { document.getElementById('pipeline-ui').innerHTML = ''; return; }
   try {
     const r = await fetch(`${API}/sandbox/${activeSandbox.container}/check`);
+    if (!r.ok) return; // Silent guard for 404/500
     const data = await r.json();
-    renderPipeline(data.stages);
+    if (data && data.stages) renderPipeline(data.stages);
   } catch(e) { console.error('Poll error:', e); }
 }
 
 function renderPipeline(stages) {
   const container = document.getElementById('pipeline-ui');
-  if (!container) return;
+  if (!container || !stages || !Array.isArray(stages)) return;
   container.innerHTML = `
     <div class="pipeline-container">
       <div class="pipeline-line"></div>
@@ -618,7 +620,8 @@ async function stopSandbox(name, force = false) {
 
 function addTab(url, title) {
   if (!activeSandbox) return;
-  const targetUrl = url || (API + activeSandbox.terminal_path);
+  const path = activeSandbox.terminal_path || `/terminal/${activeSandbox.container}`;
+  const targetUrl = url || (API + path);
   const targetTitle = title || activeSandbox.lab_id;
   const id = 'tab-' + Date.now();
   

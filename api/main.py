@@ -137,7 +137,8 @@ def list_active():
             "name": cn,
             "lab_id": data.get("lab_id"),
             "student_id": data.get("student_id"),
-            "started": data.get("started", 0)
+            "started": data.get("started", 0),
+            "terminal_path": "/terminal/{}".format(cn)
         })
     return {"sandboxes": res, "count": len(res)}
 
