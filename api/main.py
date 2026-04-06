@@ -131,9 +131,15 @@ def stop_sandbox(container_name: str):
 
 @app.get("/sandbox/active")
 def list_active():
-    r = subprocess.run(["docker","ps","--format","{{.Names}}","--filter","label=student"], capture_output=True, text=True)
-    names = [n for n in r.stdout.strip().split("\n") if n]
-    return {"sandboxes": [{"name": n} for n in names], "count": len(names)}
+    res = []
+    for cn, data in SANDBOX_REGISTRY.items():
+        res.append({
+            "name": cn,
+            "lab_id": data.get("lab_id"),
+            "student_id": data.get("student_id"),
+            "started": data.get("started", 0)
+        })
+    return {"sandboxes": res, "count": len(res)}
 
 @app.post("/progress")
 def update_progress(u: ProgressUpdate):
