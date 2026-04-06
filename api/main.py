@@ -41,6 +41,10 @@ def login(req: AuthRequest):
 def health():
     return {"status": "ok", "platform": "DevOps Learning Platform", "version": "1.0.0", "labs_found": os.path.exists(LABS_PATH)}
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "version": "2.2", "sandboxes": len(SANDBOX_REGISTRY)}
+
 @app.get("/labs")
 def get_labs():
     labs = []
@@ -65,7 +69,10 @@ def get_lab(lab_id: str):
 
 @app.post("/sandbox")
 def start_sandbox(req: SandboxRequest):
-    cn = "sb_{}_{}".format(req.student_id.lower(), req.lab_id.replace("-","_"))
+    # Ensure ID is clean
+    sid = req.student_id.lower().strip()
+    lid = req.lab_id.replace("-","_")
+    cn = "sb_{}_{}".format(sid, lid)
     if subprocess.run(["docker","ps","-q","-f","name={}".format(cn)], capture_output=True, text=True).stdout.strip():
         return {"status":"already_running","container":cn,"port":get_port(cn),"terminal_path":"/terminal/{}".format(cn)}
     
