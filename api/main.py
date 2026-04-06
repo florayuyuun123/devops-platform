@@ -15,8 +15,9 @@ class AuthRequest(BaseModel):
     password: str
 
 class SandboxRequest(BaseModel):
-    student_id: str
     lab_id: str
+    student_id: str
+    duration_minutes: int = 60
 
 class ProgressUpdate(BaseModel):
     student_id: str
@@ -101,7 +102,13 @@ def start_sandbox(req: SandboxRequest):
         subprocess.run(["docker","cp", alp + "/.", cn + ":/home/student/lab/"])
         subprocess.run(["docker","exec","-u","root",cn,"chown","-R","student:student","/home/student/lab"])
         print("LOG: Lab files injected successfully")
-    SANDBOX_REGISTRY[cn] = {"student_id":req.student_id,"lab_id":req.lab_id,"port":port,"started":int(time.time())}
+    SANDBOX_REGISTRY[cn] = {
+        "student_id":req.student_id,
+        "lab_id":req.lab_id,
+        "port":port,
+        "started":int(time.time()),
+        "duration": req.duration_minutes
+    }
     return {"status":"started","container":cn,"port":port,"terminal_path":"/terminal/{}".format(cn), "started": SANDBOX_REGISTRY[cn]["started"]}
 
 @app.get("/sandbox/{container_name}/check")
@@ -138,6 +145,7 @@ def list_active():
             "lab_id": data.get("lab_id"),
             "student_id": data.get("student_id"),
             "started": data.get("started", 0),
+            "duration": data.get("duration", 60),
             "terminal_path": "/terminal/{}".format(cn)
         })
     return {"sandboxes": res, "count": len(res)}
