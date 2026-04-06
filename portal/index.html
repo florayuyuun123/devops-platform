@@ -296,10 +296,31 @@ function renderSidebar() {
 
 let activePhaseId = 'phase-1-linux';
 let selectedLabId = null;
-
 function togglePhase(id) {
   activePhaseId = (activePhaseId === id) ? null : id;
   renderSidebar();
+}
+
+let activeLab = null;
+
+async function showLab(id) {
+  const lab = allLabs.find(l => l.id === id);
+  if (!lab) return;
+  activeLab = lab;
+  
+  // Refresh active sandbox check
+  try {
+    const r = await fetch(`${API}/sandbox/active`);
+    const d = await r.json();
+    const match = d.sandboxes.find(s => s.name.includes(currentUser.toLowerCase()));
+    if (match) {
+      activeSandbox = { container: match.name, lab_id: id }; // Simplistic sync
+    } else {
+      activeSandbox = null;
+    }
+  } catch(e) {}
+  
+  renderLab(lab);
 }
 
 function showWelcome() {
@@ -351,22 +372,6 @@ function showPhase(phaseId) {
         </div>`).join('') || '<p style="color:var(--muted)">Labs coming soon.</p>'}
       </div>
     </div>`;
-}
-
-async function showLab(labId) {
-  document.querySelectorAll('.lab-item').forEach(e => e.classList.remove('selected'));
-  const nav = document.getElementById(`nav-${labId}`);
-  if (nav) nav.classList.add('selected');
-  document.getElementById('main-content').innerHTML =
-    '<div class="loading"><div class="spinner"></div> Loading lab...</div>';
-  try {
-    const r = await fetch(`${API}/labs/${labId}`);
-    const lab = await r.json();
-    renderLab(lab);
-  } catch(e) {
-    document.getElementById('main-content').innerHTML =
-      '<div style="padding:32px 0;color:var(--muted)">Start a sandbox to read this lab offline.</div>';
-  }
 }
 
 function renderLab(lab) {
@@ -521,14 +526,12 @@ async function startSandbox(labId) {
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Failed to start sandbox');
-    activeSandbox = {...d, lab_id: labId};
     
-    // Clear old tabs and open first tab
-    terminalTabs = [];
-    document.getElementById('terminal-tabs').innerHTML = '';
-    document.getElementById('terminal-body').innerHTML = '';
-    
-    addTab(API + d.terminal_path, labId);
+    if (r.ok) {
+      activeSandbox = d;
+      addTab(API + d.terminal_path, labId);
+      renderLab(activeLab);
+    }
     
     document.getElementById('sandbox-status').textContent = 'Sandbox running';
     document.getElementById('sandbox-status').className = 'sandbox-status running';
@@ -547,7 +550,7 @@ async function stopSandbox(name) {
       terminalTabs = [];
       document.getElementById('terminal-body').innerHTML = '';
       closeTerminal();
-      showLab(selectedLabId);
+      renderLab(activeLab);
     }
   } catch (e) { console.error('Stop error:', e); }
 }
