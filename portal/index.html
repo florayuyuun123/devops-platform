@@ -448,7 +448,7 @@ function renderLab(lab) {
      </div>
      <div class="lab-content">${md(lab.content || lab.description || '')}</div>
      <div id="pipeline-ui"></div>`;
-     if (running) startTimer(activeSandbox.duration || lab.duration_minutes || 60);
+     if (running) startTimer(activeSandbox.started, activeSandbox.duration || lab.duration_minutes || 60);
      pollProgress(lab.id);
 }
 
@@ -457,26 +457,34 @@ let timerInterval = null;
 function startTimer(duration) {
   if (!activeSandbox || !activeSandbox.started) return;
   // Timer Shield: Don't restart if already running for this container
-  if (currentTimerContainer === activeSandbox.container) return;
-  
-  clearInterval(timerInterval);
-  currentTimerContainer = activeSandbox.container;
-  
-  const target = activeSandbox.started + (duration * 60);
-  const el = document.getElementById('lab-timer');
-  timerInterval = setInterval(() => {
-    const remaining = target - Math.floor(Date.now()/1000);
-    if (remaining <= 0) { 
-      el.textContent = "00:00"; el.classList.add('warning'); 
-      clearInterval(timerInterval); 
-      alert("⚠️ TIME EXPIRED: This lab session has ended. Your sandbox will be automatically terminated.");
-      stopSandbox(activeSandbox.container, true); // Use force parameter
-      return; 
+function startTimer(startedAt, durationMinutes) {
+  if (timerInterval) clearInterval(timerInterval);
+  const timerEl = document.getElementById('lab-timer');
+  if (!timerEl) return;
+
+  function update() {
+    const now = Math.floor(Date.now() / 1000);
+    const elapsed = now - startedAt;
+    const totalSeconds = durationMinutes * 60;
+    const timeLeft = Math.max(0, totalSeconds - elapsed);
+    
+    if (timeLeft <= 0) {
+      timerEl.textContent = "00:00";
+      timerEl.style.color = "var(--danger)";
+      timerEl.classList.add('pulse-red');
+      clearInterval(timerInterval);
+      return;
     }
-    const m = Math.floor(remaining/60), s = remaining%60;
-    el.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-    if (remaining < 300) el.classList.add('warning');
-  }, 1000);
+
+    const min = Math.floor(timeLeft / 60);
+    const sec = timeLeft % 60;
+    timerEl.textContent = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    
+    if (timeLeft < 300) timerEl.classList.add('pulse-red');
+  }
+
+  update();
+  timerInterval = setInterval(update, 1000);
 }
 
 async function pollProgress(labId) {
