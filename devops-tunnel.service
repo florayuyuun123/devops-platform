@@ -1,0 +1,15 @@
+[Unit]
+Description=DevOps Learning Platform Cloudflare Tunnel and Auto-Update
+After=network.target devops-api.service
+
+[Service]
+User=devops
+Environment=HOME=/home/devops
+WorkingDirectory=/home/devops/devops-platform
+ExecStartPre=/usr/bin/chmod +x /home/devops/devops-platform/tunnel-with-update.sh
+ExecStart=/bin/bash /home/devops/devops-platform/tunnel-with-update.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=DevOps Learning Platform API
+After=network.target docker.service
+
+[Service]
+# Corrected for user: devops
+User=devops
+WorkingDirectory=/home/devops/devops-platform/api
+ExecStartPre=/bin/bash -c "rm -rf /home/devops/devops-platform/api/labs && cp -r /home/devops/devops-platform/labs /home/devops/devops-platform/api/labs"
+ExecStart=/usr/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

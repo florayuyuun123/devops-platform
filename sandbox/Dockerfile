@@ -3,7 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     bash curl wget git vim nano less tree htop jq \
-    net-tools iputils-ping dnsutils nmap netcat-openbsd \
+    net-tools iputils-ping dnsutils nmap netcat-openbsd tmux \
     python3 python3-pip ansible \
     openssh-client openssh-server \
     sudo man-db unzip \

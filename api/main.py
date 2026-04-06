@@ -77,7 +77,7 @@ def start_sandbox(req: SandboxRequest):
     cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
     if os.path.exists(lp): cmd += ["-v","{}:/home/student/lab:ro".format(lp)]
     cmd.append("devops-sandbox:latest")
-    cmd.extend(["ttyd", "-W", "-p", str(port), "bash", "--login"])
+    cmd.extend(["ttyd", "-p", str(port), "tmux", "new-session", "-A", "-s", "devops", "bash", "--login"])
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0: raise HTTPException(status_code=500, detail=r.stderr)
     SANDBOX_REGISTRY[cn] = {"student_id":req.student_id,"lab_id":req.lab_id,"port":port,"started":int(time.time())}

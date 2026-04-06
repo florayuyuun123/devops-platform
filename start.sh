@@ -23,11 +23,12 @@ echo -e "${GREEN}Labs copied${NC}"
 sudo kill -9 $(sudo lsof -t -i:8080) 2>/dev/null || true
 sleep 1
 
-# Start API in background
+# Start API in background with nohup so it survives terminal closing
 cd ~/devops-platform/api
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8080 &
+nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8080 > /tmp/api.log 2>&1 &
 API_PID=$!
-echo -e "${GREEN}API started (PID $API_PID)${NC}"
+disown %1 2>/dev/null || true
+echo -e "${GREEN}API started (PID $API_PID), logs at /tmp/api.log${NC}"
 sleep 3
 
 # Test API
@@ -41,8 +42,9 @@ fi
 # Start tunnel and capture URL
 echo -e "${GREEN}Starting Cloudflare tunnel...${NC}"
 TUNNEL_LOG=$(mktemp)
-cloudflared tunnel --url http://localhost:8080 > "$TUNNEL_LOG" 2>&1 &
+nohup cloudflared tunnel --url http://localhost:8080 > "$TUNNEL_LOG" 2>&1 &
 TUNNEL_PID=$!
+disown %2 2>/dev/null || true
 
 # Wait for tunnel URL
 echo "Waiting for tunnel URL..."

@@ -1,45 +1,42 @@
-# COMPLETE DEVOPS PLATFORM GUIDE
+# 🎓 COMPLETE DEVOPS PLATFORM GUIDE
+The ultimate journey from Zero to Job-Ready DevOps Engineer.
+
+---
+
+## 📑 Table of Contents
+1.  [**Phase 1**: Linux File System & Permissions](#phase-1-linux-file-system--permissions)
+2.  [**Phase 2**: Networking, SSH & Firewalls](#phase-2-networking-ssh--firewalls)
+3.  [**Phase 3**: Git Version Control & GitHub Flow](#phase-3-git-version-control--github-flow)
+4.  [**Phase 4**: Docker Containers & Images](#phase-4-docker-containers--images)
+5.  [**Phase 5**: CI/CD Pipelines with GitHub Actions](#phase-5-cicd-pipelines-with-github-actions)
+6.  [**Phase 6**: Ansible Configuration Management](#phase-6-ansible-configuration-management)
+7.  [**Phase 7**: Kubernetes — Orchestration at Scale](#phase-7-kubernetes--container-orchestration-at-scale)
+8.  [**Phase 8**: Terraform — Infrastructure as Code](#phase-8-terraform--infrastructure-as-code-iac)
+9.  [**Phase 9**: Monitoring & Observability](#phase-9-monitoring-with-prometheus--grafana)
+10. [**Phase 10**: Capstone Project — Production App](#phase-10-capstone-project--the-production-grade-app)
+
+---
+
+## 👨‍🏫 Teacher's Foreword: The Pedagogical System
+This platform is designed to eliminate the "fear of the terminal." We use a strict **What / Why / How** methodology:
+
+*   **WHAT**: A simple, jargon-free definition of the tool.
+*   **WHY**: Real-world context. Why does a $150k/year DevOps Engineer use this?
+*   **HOW**: Step-by-step execution in a safe, isolated sandbox.
+
+> [!TIP]
+> **Focus on Concepts, Not Typos**: Use the "Copy" buttons in the portal to execute commands. This ensures you spend your brainpower understanding *logic* rather than debugging missing characters.
+
+---
 
 <!-- File: README.md -->
-# DevOps Learning Platform
-
-Free, offline-capable, hands-on DevOps training.
-Built for students with limited internet access and no expensive cloud accounts.
-
-## Live platform
-- Portal: https://florayuyuun123.github.io/devops-platform
-
-## Curriculum — 10 phases
-1. Linux fundamentals
-2. Networking & security
-3. Git & version control
-4. Docker & containers
-5. CI/CD pipelines
-6. Ansible automation
-7. Kubernetes
-8. Terraform / IaC
-9. Monitoring & observability
-10. Capstone project
-
-## Deploy your own copy
-```bash
-git clone https://github.com/florayuyuun123/devops-platform
-cd devops-platform
-# Follow SETUP.md
-```
-
-## Offline classroom node
-```bash
-curl -s https://raw.githubusercontent.com/florayuyuun123/devops-platform/main/offline-node/install.sh | bash
-```
-
-## Cost: $0
-GitHub Pages (portal) + Local API over Tunnel + optional offline node.
+# 🚀 DevOps Academy: The Zero-to-Job Platform
+A premium, free, and offline-capable DevOps training center.
 
 ---
 
 <!-- File: phase-1-linux/LAB.md -->
-# Linux File System & Permissions
+# Phase 1 — Linux File System & Permissions
 
 Welcome to your first step in the DevOps journey! Linux is the engine of the modern internet. Whether a server is in the cloud (AWS/Azure) or in a data center, it's almost certainly running Linux. 
 
@@ -181,7 +178,7 @@ Set `server.conf` to `400` (read-only, even for you). Then try to edit it or del
 ---
 
 <!-- File: phase-2-networking/LAB.md -->
-# Networking, SSH & Firewalls
+# Phase 2 — Networking, SSH & Firewalls
 
 You cannot bridge the gap from a SysAdmin to a DevOps Engineer without mastering networking. In the cloud, every resource (server, database, load balancer) is just an IP address on a network. 
 
@@ -330,7 +327,7 @@ Find out what port `nginx` listens on by default (HINT: it's for the web). Then 
 ---
 
 <!-- File: phase-3-git/LAB.md -->
-# Git Version Control & GitHub Flow
+# Phase 3 — Git Version Control & GitHub Flow
 
 In DevOps, we treat everything as code—even our servers. If it's not in Git, it doesn't exist. Git is your "Save Game" button and your "Undo" button for your entire career.
 
@@ -496,7 +493,7 @@ Create a branch called `fix/typo`, make a small change to `README.md`, commit it
 ---
 
 <!-- File: phase-4-docker/LAB.md -->
-# Docker Containers & Images
+# Phase 4 — Docker Containers & Images
 
 Docker is the most important tool in modern DevOps. If you master Docker, you are instantly employable. It solves the famous "It works on my machine" problem by package applications into portable "Containers."
 
@@ -650,7 +647,7 @@ Find out how to list only the **IDs** of your containers (HINT: use `docker ps -
 ---
 
 <!-- File: phase-5-cicd/LAB.md -->
-# CI/CD Pipelines with GitHub Actions
+# Phase 5 — CI/CD Pipelines with GitHub Actions
 
 CI/CD is the heart of DevOps. It is how professional teams "ship" software safely and quickly. If you can build and maintain a pipeline, you are essentially a full-fledged DevOps Engineer.
 
@@ -770,7 +767,7 @@ Find out how to add a "Status Badge" (a small green icon) to your README.md file
 ---
 
 <!-- File: phase-6-ansible/LAB.md -->
-# Ansible Configuration Management
+# Phase 6 — Ansible Configuration Management
 
 Automation is the secret sauce of DevOps. Instead of typing the same 50 commands on 50 different servers, you write one "Playbook" and let Ansible do the work for you.
 
@@ -924,7 +921,7 @@ Write an Ansible playbook that creates a user named `junior-dev`. Run it twice. 
 ---
 
 <!-- File: phase-7-kubernetes/LAB.md -->
-# Kubernetes — Container Orchestration at Scale
+# Phase 7 — Kubernetes — Container Orchestration at Scale
 
 Kubernetes (often called K8s) is the industry standard for running containerized apps. While Docker runs one container, Kubernetes runs *thousands* of containers across hundreds of servers. It is the most valuable skill on a DevOps resume today.
 
@@ -1094,7 +1091,7 @@ Try to scale your deployment to **0** replicas. What happens when you run `kubec
 ---
 
 <!-- File: phase-8-terraform/LAB.md -->
-# Terraform — Infrastructure as Code (IaC)
+# Phase 8 — Terraform — Infrastructure as Code (IaC)
 
 In the old days, if you needed a server, you had to click a hundred buttons in the AWS or Azure console. With **Terraform**, you simply write a text file describing the server you want, and Terraform builds it for you. This is "Infrastructure as Code."
 
@@ -1257,7 +1254,7 @@ Run `terraform destroy` and then check if the files in `/tmp` still exist. This 
 ---
 
 <!-- File: phase-9-monitoring/LAB.md -->
-# Monitoring with Prometheus & Grafana
+# Phase 9 — Monitoring with Prometheus & Grafana
 
 You cannot fix what you cannot see. Monitoring is how you know a service is broken BEFORE your users do. In a Senior DevOps or SRE (Site Reliability Engineer) role, this is your most important daily responsibility.
 
@@ -1386,7 +1383,7 @@ Find out how to view the "Targets" in the Prometheus UI. This screen shows you e
 ---
 
 <!-- File: phase-10-capstone/LAB.md -->
-# Capstone Project — The Production-Grade App
+# Phase 10 — Capstone Project — The Production-Grade App
 
 This is what you've been working toward! You are now going to build a complete deployment pipeline for a web application that demonstrates every single skill you've learned. This isn't just a lab—this is your **Portfolio Project**. Show this to every recruiter and hiring manager.
 
