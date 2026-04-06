@@ -454,9 +454,7 @@ function renderLab(lab) {
 
 let currentTimerContainer = null;
 let timerInterval = null;
-function startTimer(duration) {
-  if (!activeSandbox || !activeSandbox.started) return;
-  // Timer Shield: Don't restart if already running for this container
+
 function startTimer(startedAt, durationMinutes) {
   if (timerInterval) clearInterval(timerInterval);
   const timerEl = document.getElementById('lab-timer');
