@@ -71,13 +71,18 @@
   .copy-btn:hover{background:rgba(255,255,255,0.2);color:#fff;}
   .copy-btn.copied{background:var(--success);color:#fff;border-color:var(--success);}
 
-  .terminal-panel{position:fixed;bottom:0;left:0;right:0;height:40vh;background:#020617;border-top:1px solid var(--border);z-index:200;display:none;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,0.5);}
+  .terminal-panel{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1200px;height:40vh;background:#020617;border:1px solid var(--border);border-bottom:none;border-radius:16px 16px 0 0;z-index:200;display:none;flex-direction:column;box-shadow:0 -10px 60px rgba(0,0,0,0.8);overflow:hidden;}
   .terminal-panel.open{display:flex;}
-  .terminal-resizer{height:6px;background:transparent;cursor:ns-resize;position:absolute;top:-3px;left:0;right:0;z-index:210;}
+  .terminal-panel.split .terminal-body{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+  .terminal-resizer{height:6px;background:transparent;cursor:ns-resize;position:absolute;top:0;left:0;right:0;z-index:210;}
   .terminal-resizer:hover{background:var(--accent);transition:0.3s;}
-  .terminal-topbar{height:40px;display:flex;align-items:center;padding:0 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border);}
-  .terminal-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
-  .terminal-frame{flex:1;border:none;background:transparent;}
+  .terminal-topbar{height:40px;display:flex;align-items:center;padding:0 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid var(--border);justify-content:space-between;}
+  .terminal-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .terminal-actions{display:flex;align-items:center;gap:12px;}
+  .terminal-body{flex:1;display:flex;background:#020617;}
+  .terminal-frame{flex:1;border:none;background:transparent;width:100%;}
+  .terminal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;line-height:1;}
+  .terminal-close:hover{color:var(--text);}
 
   .welcome-screen{padding:40px 0 16px;}
   .welcome-screen h1{font-size:30px;font-weight:700;margin-bottom:10px;}
@@ -150,9 +155,15 @@
   <div class="terminal-resizer" id="terminal-resizer"></div>
   <div class="terminal-topbar">
     <div class="terminal-title" id="terminal-title">Terminal</div>
-    <button class="terminal-close" onclick="closeTerminal()">×</button>
+    <div class="terminal-actions">
+      <button class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px" onclick="toggleSplit()">Split View</button>
+      <button class="terminal-close" onclick="closeTerminal()">×</button>
+    </div>
   </div>
-  <iframe class="terminal-frame" id="terminal-frame" src="about:blank"></iframe>
+  <div class="terminal-body" id="terminal-body">
+    <iframe class="terminal-frame" id="terminal-frame" src="about:blank"></iframe>
+    <iframe class="terminal-frame" id="terminal-frame-2" src="about:blank" style="display:none"></iframe>
+  </div>
 </div>
 
 <script>
@@ -328,7 +339,7 @@ function md(t) {
   return t
     .replace(/```[\w]*\n([\s\S]*?)```/g, (m, c) => {
       const code = c.trim();
-      return `<pre><code>${c}</code><button class="copy-btn" onclick="copyCode(this, \`${btoa(code)}\`)">Copy</button></pre>`;
+      return `<pre><code>${c}</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>`;
     })
     .replace(/^### (.+)$/gm,'<h3>$1</h3>')
     .replace(/^## (.+)$/gm,'<h2>$1</h2>')
@@ -340,16 +351,29 @@ function md(t) {
     .replace(/^(?!<)/gm,'<p>');
 }
 
-function copyCode(btn, base64) {
-  const code = atob(base64);
-  navigator.clipboard.writeText(code).then(() => {
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
+function copyCode(btn) {
+  const code = btn.previousElementSibling.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => {
+      showCopied(btn);
+    });
+  } else {
+    // Fallback for non-secure context
+    const ta = document.createElement("textarea");
+    ta.value = code; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy");
+    document.body.removeChild(ta);
+    showCopied(btn);
+  }
+}
+
+function showCopied(btn) {
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.textContent = 'Copy';
+    btn.classList.remove('copied');
+  }, 2000);
 }
 
 // Resizable terminal logic
@@ -405,10 +429,18 @@ async function stopSandbox(name) {
 function openTerminal(url, labId) {
   document.getElementById('terminal-title').textContent = `Terminal — ${labId}`;
   document.getElementById('terminal-frame').src = url;
+  document.getElementById('terminal-frame-2').src = url; // Pre-load sync session
   document.getElementById('terminal-panel').classList.add('open');
   const height = parseInt(panel.style.height) || 400;
   panel.style.height = height + 'px';
   document.querySelector('.content').style.paddingBottom = height + 'px';
+}
+
+function toggleSplit() {
+  const p = document.getElementById('terminal-panel');
+  const f2 = document.getElementById('terminal-frame-2');
+  p.classList.toggle('split');
+  f2.style.display = p.classList.contains('split') ? 'block' : 'none';
 }
 
 function closeTerminal() {

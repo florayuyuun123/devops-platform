@@ -73,9 +73,21 @@ def start_sandbox(req: SandboxRequest):
     h = int(hashlib.sha1(cn.encode()).hexdigest(), 16)
     port = 7700 + (h % 200)
     
-    lp = os.path.join(LABS_PATH, req.lab_id)
+    # Find the correct lab folder by matching the ID in meta.json
+    lp = None
+    if os.path.exists(LABS_PATH):
+        for d in os.listdir(LABS_PATH):
+            mf = os.path.join(LABS_PATH, d, "meta.json")
+            if os.path.exists(mf):
+                try:
+                    with open(mf) as f:
+                        meta = json.load(f)
+                        if meta.get("id") == req.lab_id:
+                            lp = os.path.join(LABS_PATH, d)
+                            break
+                except: continue
     cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
-    if os.path.exists(lp): cmd += ["-v","{}:/home/student/lab:ro".format(lp)]
+    if lp and os.path.exists(lp): cmd += ["-v","{}:/home/student/lab:ro".format(lp)]
     cmd.append("devops-sandbox:latest")
     cmd.extend(["ttyd", "-p", str(port), "tmux", "new-session", "-A", "-s", "devops", "bash", "--login"])
     r = subprocess.run(cmd, capture_output=True, text=True)
