@@ -40,21 +40,22 @@
   .sidebar-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);padding:0 20px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;}
   
   .phase-group{margin:0 12px 4px;border-radius:12px;overflow:hidden;border:1px solid transparent;transition:all 0.2s;}
+  .phase-group:hover{background:rgba(255,255,255,0.02);}
   .phase-group.active{background:rgba(255,255,255,0.03);border-color:var(--border);}
   .phase-header{display:flex;align-items:center;padding:12px 14px;cursor:pointer;gap:12px;user-select:none;transition:0.2s;}
   .phase-header:hover{background:rgba(255,255,255,0.05);}
   .phase-num{font-size:10px;font-weight:700;color:var(--muted);background:var(--surface2);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);}
   .phase-group.active .phase-num{background:var(--accent);color:#fff;border-color:var(--accent);}
   .phase-title{font-size:13px;font-weight:600;color:var(--text);flex:1;}
-  .phase-arrow{font-size:10px;color:var(--muted);transition:transform 0.3s;}
-  .phase-group.active .phase-arrow{transform:rotate(90deg);}
+  .phase-arrow{font-size:10px;color:var(--muted);transition:transform 0.3s;opacity:0.5;}
+  .phase-group.active .phase-arrow{transform:rotate(90deg);opacity:1;}
 
-  .lab-list{padding:4px 0 10px;display:none;}
+  .lab-list{padding:4px 0 10px;display:none;background:rgba(0,0,0,0.1);}
   .phase-group.active .lab-list{display:block;}
   .lab-item{padding:8px 14px 8px 48px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .2s;display:flex;align-items:center;gap:8px;position:relative;}
   .lab-item::before{content:'';position:absolute;left:24px;top:50%;width:6px;height:6px;border-radius:50%;background:var(--border);transform:translateY(-50%);}
   .lab-item:hover{color:var(--text);background:rgba(255,255,255,0.03);}
-  .lab-item.selected{color:var(--accent);font-weight:600;}
+  .lab-item.selected{color:var(--accent);font-weight:600;background:rgba(99, 102, 241, 0.05);}
   .lab-item.selected::before{background:var(--accent);box-shadow:0 0 8px var(--accent);}
 
   .lab-pane{flex:1;min-width:300px;overflow-y:auto;background:#0f1117;border-right:1px solid var(--border);position:relative;}
@@ -281,6 +282,7 @@ function renderSidebar() {
       <div class="lab-list">
         ${labs.map(l => `<div class="lab-item ${selectedLabId === l.id ? 'selected' : ''}" id="nav-${l.id}"
           onclick="showLab('${l.id}')">${l.title}</div>`).join('')}
+        ${labs.length === 0 ? '<div style="padding:10px 48px;font-size:12px;color:var(--muted)">Labs coming soon</div>' : ''}
       </div>
     </div>`;
   }).join('');
