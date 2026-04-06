@@ -38,10 +38,6 @@ def login(req: AuthRequest):
     return {"token": token, "username": req.username}
 
 @app.get("/health")
-def health():
-    return {"status": "ok", "platform": "DevOps Learning Platform", "version": "1.0.0", "labs_found": os.path.exists(LABS_PATH)}
-
-@app.get("/health")
 def health_check():
     return {
         "status": "ok", 
@@ -122,7 +118,14 @@ def start_sandbox(req: SandboxRequest):
         "started":int(time.time()),
         "duration": req.duration_minutes
     }
-    return {"status":"started","container":cn,"port":port,"terminal_path":"/terminal/{}".format(cn), "started": SANDBOX_REGISTRY[cn]["started"]}
+    return {
+        "status":"started",
+        "container":cn,
+        "lab_id": req.lab_id,
+        "port":port,
+        "terminal_path":"/terminal/{}".format(cn), 
+        "started": SANDBOX_REGISTRY[cn]["started"]
+    }
 
 @app.get("/sandbox/{container_name}/check")
 def check_progress(container_name: str):
