@@ -16,8 +16,9 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;display:flex;flex-direction:column;}
   header{background:rgba(15, 17, 23, 0.8);backdrop-filter:var(--glass);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;z-index:100;}
-  .logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--accent);}
-  .logo span{color:var(--accent2);}
+  .logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--accent);display:flex;align-items:center;gap:12px;}
+  .logo img{height:32px;width:32px;object-fit:contain;filter:drop-shadow(0 0 8px var(--accent));}
+  .logo span{color:var(--accent2);margin-left:-8px;}
   .btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);display:inline-flex;align-items:center;gap:8px;}
   .btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
   .btn-primary{background:linear-gradient(135deg, var(--accent), #4f46e5);color:#fff;box-shadow:0 4px 12px rgba(99, 102, 241, 0.3);}
@@ -187,7 +188,11 @@
 
 <div id="app-screen">
   <header>
-    <div class="logo">DevOps<span>Platform</span> <small style="font-size:10px;opacity:0.3;margin-left:8px;">v2.2</small></div>
+    <div class="logo">
+      <img src="logo.png" alt="Logo">
+      DevOps<span>Platform</span> 
+      <small style="font-size:10px;opacity:0.3;margin-left:8px;">v3.0</small>
+    </div>
     <div style="display:flex;align-items:center;gap:20px">
       <span id="user-label" style="font-size:14px;color:var(--muted)"></span>
       <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
