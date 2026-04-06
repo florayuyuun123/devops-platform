@@ -8,6 +8,24 @@ app = FastAPI(title="DevOps Learning Platform", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 SESSIONS, SANDBOX_REGISTRY = {}, {}
+REGISTRY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sandboxes.json")
+
+def save_registry():
+    try:
+        with open(REGISTRY_FILE, "w") as f:
+            json.dump(SANDBOX_REGISTRY, f)
+    except Exception as e: print(f"ERROR: Could not save registry: {e}")
+
+def load_registry():
+    global SANDBOX_REGISTRY
+    if os.path.exists(REGISTRY_FILE):
+        try:
+            with open(REGISTRY_FILE, "r") as f:
+                SANDBOX_REGISTRY = json.load(f)
+        except Exception as e: print(f"ERROR: Could not load registry: {e}")
+
+load_registry()
+
 LABS_PATH = os.path.abspath(os.path.normpath(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "labs")))
 
 class AuthRequest(BaseModel):
@@ -118,6 +136,7 @@ def start_sandbox(req: SandboxRequest):
         "started":int(time.time()),
         "duration": req.duration_minutes
     }
+    save_registry()
     return {
         "status":"started",
         "container":cn,
@@ -141,6 +160,7 @@ def stop_sandbox(container_name: str):
     subprocess.run(["docker","stop",container_name], capture_output=True)
     subprocess.run(["docker","rm",container_name], capture_output=True)
     SANDBOX_REGISTRY.pop(container_name, None)
+    save_registry()
     return {"status":"stopped"}
 
 @app.get("/sandbox/active")
