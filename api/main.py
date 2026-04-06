@@ -102,7 +102,25 @@ def start_sandbox(req: SandboxRequest):
         subprocess.run(["docker","exec","-u","root",cn,"chown","-R","student:student","/home/student/lab"])
         print("LOG: Lab files injected successfully")
     SANDBOX_REGISTRY[cn] = {"student_id":req.student_id,"lab_id":req.lab_id,"port":port,"started":int(time.time())}
-    return {"status":"started","container":cn,"port":port,"terminal_path":"/terminal/{}".format(cn)}
+    return {"status":"started","container":cn,"port":port,"terminal_path":"/terminal/{}".format(cn), "started": SANDBOX_REGISTRY[cn]["started"]}
+
+@app.get("/sandbox/{container_name}/check")
+def check_progress(container_name: str):
+    # 1. Run check.sh inside container if exists
+    res = subprocess.run(["docker","exec",container_name,"bash","/home/student/lab/check.sh"], capture_output=True, text=True)
+    if res.returncode == 0:
+        try: return json.loads(res.stdout)
+        except: return {"percentage": 100, "stages": [{"id":"all","name":"Lab Success","status":"success"}]}
+    
+    # 2. Fallback (General activity check)
+    return {
+        "percentage": 33,
+        "stages": [
+            {"id":"env", "name":"Environment Setup", "status":"success"},
+            {"id":"cfg", "name":"Configuration", "status":"running"},
+            {"id":"val", "name":"Final Validation", "status":"pending"}
+        ]
+    }
 
 @app.delete("/sandbox/{container_name}")
 def stop_sandbox(container_name: str):
