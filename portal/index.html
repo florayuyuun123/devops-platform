@@ -345,11 +345,13 @@ async function syncActiveSandbox(targetLabId) {
   try {
     const r = await fetch(`${API}/sandbox/active`);
     const d = await r.json();
-    const match = d.sandboxes.find(s => s.name.includes(currentUser.toLowerCase()));
+    // Find a sandbox that matches this lab ID (either exactly or as part of the container name)
+    const match = d.sandboxes.find(s => s.lab_id === targetLabId || s.name.includes(targetLabId.replace(/-/g, '_')));
+    
     if (match) {
       activeSandbox = { 
         container: match.name, 
-        lab_id: targetLabId || match.lab_id, 
+        lab_id: targetLabId, // Lock it to the current lab for UI consistency
         started: match.started,
         duration: match.duration || 60,
         terminal_path: match.terminal_path || `/terminal/${match.name}`
