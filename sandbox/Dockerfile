@@ -31,8 +31,9 @@ RUN useradd -m -s /bin/bash student \
     && echo "student:devops2024" | chpasswd \
     && usermod -aG sudo student \
     && echo "student ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
-    && echo "alias ls='ls --color=auto'" >> /etc/bash.bashrc \
-    && echo "export PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ '" >> /etc/bash.bashrc
+    && echo "export PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ '" > /etc/profile.d/99-colors.sh \
+    && echo "alias ls='ls --color=auto'" >> /etc/profile.d/99-colors.sh \
+    && rm -f /home/student/.bashrc
 
 COPY welcome.sh /etc/profile.d/welcome.sh
 RUN chmod +x /etc/profile.d/welcome.sh
