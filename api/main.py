@@ -43,7 +43,12 @@ def health():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "version": "2.2", "sandboxes": len(SANDBOX_REGISTRY)}
+    return {
+        "status": "ok", 
+        "version": "2.2", 
+        "file_path": os.path.abspath(__file__),
+        "sandboxes": len(SANDBOX_REGISTRY)
+    }
 
 @app.get("/labs")
 def get_labs():
