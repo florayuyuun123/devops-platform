@@ -98,7 +98,7 @@ def start_sandbox(req: SandboxRequest):
                 except: continue
     cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
     cmd.append("devops-sandbox:latest")
-    cmd.extend(["ttyd", "-p", str(port), "tmux", "new-session", "-A", "-s", "devops", "bash", "--login"])
+    cmd.extend(["sh", "-c", f"ttyd -p {port} tmux new-session -A -s devops bash --login"])
     
     print("LOG: Starting sandbox: " + " ".join(cmd))
     r = subprocess.run(cmd, capture_output=True, text=True)
