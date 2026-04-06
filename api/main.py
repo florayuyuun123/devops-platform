@@ -69,10 +69,11 @@ def get_lab(lab_id: str):
 
 @app.post("/sandbox")
 def start_sandbox(req: SandboxRequest):
-    # Ensure ID is clean
+    # Ensure student ID is clean and lowercase
     sid = req.student_id.lower().strip()
     lid = req.lab_id.replace("-","_")
     cn = "sb_{}_{}".format(sid, lid)
+    
     if subprocess.run(["docker","ps","-q","-f","name={}".format(cn)], capture_output=True, text=True).stdout.strip():
         return {"status":"already_running","container":cn,"port":get_port(cn),"terminal_path":"/terminal/{}".format(cn)}
     
@@ -120,21 +121,12 @@ def start_sandbox(req: SandboxRequest):
 
 @app.get("/sandbox/{container_name}/check")
 def check_progress(container_name: str):
-    # 1. Run check.sh inside container if exists
-    res = subprocess.run(["docker","exec",container_name,"bash","/home/student/lab/check.sh"], capture_output=True, text=True)
-    if res.returncode == 0:
-        try: return json.loads(res.stdout)
-        except: return {"percentage": 100, "stages": [{"id":"all","name":"Lab Success","status":"success"}]}
-    
-    # 2. Fallback (General activity check)
-    return {
-        "percentage": 33,
-        "stages": [
-            {"id":"env", "name":"Environment Setup", "status":"success"},
-            {"id":"cfg", "name":"Configuration", "status":"running"},
-            {"id":"val", "name":"Final Validation", "status":"pending"}
-        ]
-    }
+    # Logic to run check.sh inside container
+    try:
+        r = subprocess.run(["docker","exec",container_name,"bash","-c","[ -f /home/student/lab/check.sh ] && bash /home/student/lab/check.sh || echo '{\"stages\":[]}'"], capture_output=True, text=True)
+        return json.loads(r.stdout)
+    except:
+        return {"stages":[{"id":"init","name":"Initializing","status":"running"}]}
 
 @app.delete("/sandbox/{container_name}")
 def stop_sandbox(container_name: str):
