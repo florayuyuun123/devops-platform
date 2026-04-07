@@ -1,4 +1,4 @@
-# DevOps Learning Platform — Complete Setup & Operations Guide
+# DevOps Learning Platform — Complete Setup & Operations Guide (v3.0 Stable)
 
 > Free, offline-capable, hands-on DevOps training for everyone.
 > No credit card required. Works without internet. Costs $0 to run.
@@ -32,8 +32,8 @@
 22. [Step 17 — Permanent Background Services (systemd)](#22-step-17--permanent-background-services-systemd)
 23. [Adding New Labs](#23-adding-new-labs)
 24. [Managing Students](#24-managing-students)
-25. [Updating the Platform](#25-updating-the-platform)
-26. [Troubleshooting](#26-troubleshooting)
+25. [Master Platform Maintenance (`fix-everything.sh`)](#25-master-platform-maintenance-fix-everything-sh)
+26. [Technical Recovery & Troubleshooting](#26-technical-recovery--troubleshooting)
 27. [Platform Uptime Reference](#27-platform-uptime-reference)
 28. [Glossary](#28-glossary)
 29. [Quick Reference](#29-quick-reference)
@@ -997,7 +997,44 @@ git reset --hard origin/main
 
 ---
 
-### API returns 500 on /terminal/
+## 25. Master Platform Maintenance (`fix-everything.sh`)
+
+Administering a complex full-stack platform can be exhausting. To make maintenance effortless, use the **Master Restoration Script**. This one-click tool handles state-sync, visual rebuilding, and service restarts in a single command.
+
+### When to use it
+- After a machine reboot or power outage.
+- If the "Stop sandbox" button is missing despite containers running.
+- If the terminal prompt colors are white instead of green/blue.
+- If the UI and Backend feel "Desynchronized."
+
+### How to use it
+```bash
+# 1. Pull the absolute latest stable logic
+cd ~/devops-platform
+git fetch origin main && git reset --hard origin/main
+
+# 2. Run the Master Fix
+chmod +x fix-everything.sh
+./fix-everything.sh
+```
+
+---
+
+## 26. Technical Recovery & Troubleshooting
+
+### Terminal is White (Missing Technicolor)
+The sandbox image (`devops-sandbox:latest`) needs to be rebuilt to apply the `/etc/profile.d/99-colors.sh` enforcement logic.
+```bash
+cd ~/devops-platform/sandbox
+sudo docker build --no-cache -t devops-sandbox:latest .
+sudo systemctl restart devops-api
+```
+
+### Timer keeps resetting to 45:00
+Fixed in v3.0. This was caused by UI refreshes during in-memory sync. Ensure your `portal/index.html` is up to date and your API is running the persistent `sandboxes.json` logic.
+
+### 404 Error: /terminal/CONTAINER_NAME
+This happens if the API lost track of a running container. Use Step 25 to "Nuke & Sync."
 
 ```bash
 # Check debug endpoint
@@ -1088,7 +1125,7 @@ git config --global credential.helper store
 | **nohup** | Runs a process that survives WSL terminal idle/close |
 | **Oracle Always Free** | Oracle Cloud free tier — 4 CPUs, 24GB RAM, 24/7 |
 | **Personal Access Token** | GitHub token used instead of password for git push |
-| **SANDBOX_REGISTRY** | In-memory dict — clears on API restart, use docker port as backup |
+| **SANDBOX_REGISTRY** | Persistent file-based store (`sandboxes.json`) — survives API restarts |
 | **ttyd** | Tool serving a Linux terminal as a webpage on a random port |
 | **trycloudflare.com** | Domain Cloudflare assigns to free quick tunnels |
 | **WebSocket** | Protocol for real-time terminal communication |
@@ -1099,8 +1136,8 @@ git config --global credential.helper store
 ## 28. Quick Reference
 
 ```bash
-# ── Start everything (recommended) ──────────────────────────
-~/devops-platform/start.sh
+# ── Master Restoration (One-Click Fix) ──────────────────
+./fix-everything.sh
 
 # ── Service Management (Professional) ──────────────────────
 sudo systemctl status devops-api devops-tunnel
