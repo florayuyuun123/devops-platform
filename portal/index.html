@@ -105,8 +105,11 @@
   .tab-plus:hover{background:var(--accent);color:#fff;}
 
   .terminal-body{flex:1;display:flex;background:rgba(2, 6, 23, 0.7);backdrop-filter:blur(18px);position:relative;border-top:1px solid var(--border);}
-  .terminal-frame{position:absolute;inset:0;width:100%;height:100%;border:none;display:none;}
-  .terminal-frame.active{display:block;}
+  .terminal-frame-wrapper{position:absolute;inset:0;width:100%;height:100%;display:none;}
+  .terminal-frame-wrapper.active{display:flex;flex-direction:column;}
+  .terminal-frame{flex:1;width:100%;height:100%;border:none;}
+  .terminal-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(2,6,23,0.85);backdrop-filter:blur(8px);z-index:10;}
+  .terminal-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
 
   /* Modern PowerShell Scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -442,12 +445,12 @@ function renderLab(lab) {
     </div>
      <div class="action-bar">
        <button class="btn btn-success btn-sm" onclick="startSandbox('${lab.id}')">
-         ${running ? 'Open terminal' : 'Start sandbox'}
+         ${running ? 'Open terminal' : '▶ Start lab'}
        </button>
        ${running ? `<button class="btn btn-danger btn-sm"
-         onclick="stopSandbox('${activeSandbox.container}')">Stop sandbox</button>` : ''}
+         onclick="stopSandbox('${activeSandbox.container}')">■ Stop lab</button>` : ''}
        <div class="sandbox-status ${running?'running':''}" id="sandbox-status">
-         ${running ? 'Sandbox running' : 'No active sandbox'}
+         ${running ? '● Lab running' : 'No active lab'}
        </div>
        ${running ? `<div class="timer-box" id="lab-timer" style="margin-left:auto;">00:00</div>` : ''}
      </div>
@@ -602,7 +605,7 @@ let terminalTabs = [];
 let activeTabId = null;
 
 async function startSandbox(labId) {
-  document.getElementById('sandbox-status').textContent = 'Starting sandbox...';
+  document.getElementById('sandbox-status').textContent = 'Starting lab...';
   try {
     const r = await fetch(`${API}/sandbox`, {
       method: 'POST',
@@ -620,10 +623,10 @@ async function startSandbox(labId) {
     addTab(API + d.terminal_path, labId);
     renderLab(activeLab);
     
-    document.getElementById('sandbox-status').textContent = 'Sandbox running';
+    document.getElementById('sandbox-status').textContent = '● Lab running';
     document.getElementById('sandbox-status').className = 'sandbox-status running';
   } catch(e) {
-    document.getElementById('sandbox-status').textContent = 'Failed to start sandbox';
+    document.getElementById('sandbox-status').textContent = 'Failed to start lab';
     console.error('Sandbox error:', e);
   }
 }
@@ -653,12 +656,27 @@ function addTab(url, title) {
   terminalTabs.push(tab);
   
   renderTabs();
+
+  // Wrapper with loading spinner
+  const wrapper = document.createElement('div');
+  wrapper.className = 'terminal-frame-wrapper';
+  wrapper.id = 'wrapper-' + id;
+  wrapper.innerHTML = `
+    <div class="terminal-loader" id="loader-${id}">
+      <div class="terminal-spinner"></div>
+      <div style="color:var(--muted);font-size:13px;margin-top:16px">Launching lab terminal...</div>
+    </div>`;
   
   const ifr = document.createElement('iframe');
   ifr.className = 'terminal-frame';
   ifr.id = 'frame-' + id;
   ifr.src = targetUrl;
-  document.getElementById('terminal-body').appendChild(ifr);
+  ifr.addEventListener('load', () => {
+    const loader = document.getElementById('loader-' + id);
+    if (loader) loader.remove();
+  });
+  wrapper.appendChild(ifr);
+  document.getElementById('terminal-body').appendChild(wrapper);
   
   switchTab(id);
   document.getElementById('terminal-pane').classList.add('open');
@@ -677,8 +695,8 @@ function renderTabs() {
 function switchTab(id) {
   activeTabId = id;
   renderTabs();
-  document.querySelectorAll('.terminal-frame').forEach(f => {
-    f.classList.toggle('active', f.id === 'frame-' + id);
+  document.querySelectorAll('.terminal-frame-wrapper').forEach(f => {
+    f.classList.toggle('active', f.id === 'wrapper-' + id);
   });
 }
 
