@@ -129,6 +129,25 @@ def start_sandbox(req: SandboxRequest):
         subprocess.run(["docker","cp", alp + "/.", cn + ":/home/student/lab/"])
         subprocess.run(["docker","exec","-u","root",cn,"chown","-R","student:student","/home/student/lab"])
         print("LOG: Lab files injected successfully")
+
+    # ── ttyd Readiness Check ─────────────────────────────────────
+    # Wait until ttyd is actually listening before telling the browser to load.
+    # This eliminates the blank-screen delay on the frontend iframe.
+    print(f"LOG: Waiting for ttyd on port {port}...")
+    ttyd_ready = False
+    for _ in range(30):  # up to 15 seconds (30 x 0.5s)
+        try:
+            import socket
+            s = socket.create_connection(("localhost", port), timeout=1)
+            s.close()
+            ttyd_ready = True
+            print(f"LOG: ttyd is ready on port {port}")
+            break
+        except OSError:
+            time.sleep(0.5)
+    if not ttyd_ready:
+        print(f"WARNING: ttyd did not respond on port {port} within 15s")
+
     SANDBOX_REGISTRY[cn] = {
         "student_id":req.student_id,
         "lab_id":req.lab_id,
@@ -142,7 +161,7 @@ def start_sandbox(req: SandboxRequest):
         "container":cn,
         "lab_id": req.lab_id,
         "port":port,
-        "terminal_path":"/terminal/{}".format(cn), 
+        "terminal_path":"/terminal/{}".format(cn),
         "started": SANDBOX_REGISTRY[cn]["started"]
     }
 
