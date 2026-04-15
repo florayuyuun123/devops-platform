@@ -9,6 +9,10 @@ Kubernetes (often called K8s) is the industry standard for running containerized
 Before interacting with Kubernetes, we need a cluster. In this sandbox, you have full Docker engine access, so we will use **Minikube** with the Docker driver.
 
 ```bash
+# Optional: Clear any old "Ghost Pods" from your host machine first
+minikube delete --all --purge
+
+# Start the cluster
 minikube start --driver=docker
 ```
 *Wait a minute or two for the cluster to fully provision.* 
