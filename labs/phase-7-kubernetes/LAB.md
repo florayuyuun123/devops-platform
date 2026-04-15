@@ -1,10 +1,10 @@
 # Kubernetes Masterclass — Orchestration at Scale
 
-Kubernetes (often called K8s) is the industry standard for running containerized applications intelligently across fleets of servers. This module covers everything from basic Pods to Services and ConfigMaps.
+Kubernetes (often called K8s) is the industry standard for running containerized applications intelligently across fleets of servers. This module covers everything from basic Pods to Services, ConfigMaps, RBAC Security, and Helm package management.
 
 ---
 
-## Task 1 — Provision the Local Cluster (Day 1)
+## Task 1 — Provision the Local Cluster
 
 Before interacting with Kubernetes, we need a cluster. In this sandbox, you have full Docker engine access, so we will use **Minikube** with the Docker driver.
 
@@ -19,7 +19,7 @@ kubectl get nodes
 
 ---
 
-## Task 2 — Pods & Deployments (Day 2)
+## Task 2 — Pods & Deployments
 
 A **Pod** is the smallest unit (1+ containers). A **Deployment** manages those Pods, ensuring a specific number of replicas are always running.
 
@@ -63,9 +63,9 @@ kubectl get pods
 
 ---
 
-## Task 3 — Services and Networking (Day 3)
+## Task 3 — Services and Networking
 
-Pods die and get new IPs. A **Service** provides a stable IP or port to reach them. We will create a `ClusterIP` (internal access only) and a `NodePort` (external access).
+Pods die and get new IPs. A **Service** provides a stable IP or port to reach them. We will create a `NodePort` service to allow external access.
 
 Create a NodePort Service:
 ```bash
@@ -94,7 +94,7 @@ kubectl get services
 
 ---
 
-## Task 4 — ConfigMaps and Storage (Day 4)
+## Task 4 — ConfigMaps and Storage
 
 We use **ConfigMaps** to inject configuration files into containers without rebuilding images.
 
@@ -115,7 +115,7 @@ EOF
 kubectl apply -f app-config.yaml
 ```
 
-Now, let's mount this ConfigMap into a new Pod so Nginx serves our custom HTML!
+Now, mount this ConfigMap into a new Pod so Nginx serves our custom HTML!
 ```bash
 cat > config-pod.yaml << 'EOF'
 apiVersion: v1
@@ -139,23 +139,123 @@ EOF
 kubectl apply -f config-pod.yaml
 ```
 
-Wait until it runs, then test it from inside the cluster using port-forwarding:
+---
+
+## Task 5 — Role-Based Access Control (RBAC)
+
+**RBAC** allows you to restrict what users or Service Accounts can do in the cluster (Least Privilege Principle).
+
+1. Create a Namespace and a ServiceAccount:
 ```bash
-kubectl port-forward pod/config-demo-pod 8080:80 &
-curl http://localhost:8080
+kubectl create namespace dev
+kubectl create serviceaccount demo-sa --namespace=dev
 ```
-*(Press Enter to return to the prompt after checking the output, then `kill %1` to stop port-forwarding).*
+
+2. Create a **Role** that only allows someone to *read* pods in the `dev` namespace:
+```bash
+cat > role.yaml << 'EOF'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: dev
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+EOF
+```
+```bash
+kubectl apply -f role.yaml
+```
+
+3. Tie the Role to the ServiceAccount using a **RoleBinding**:
+```bash
+cat > rolebinding.yaml << 'EOF'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: dev
+subjects:
+- kind: ServiceAccount
+  name: demo-sa
+  namespace: dev
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+```bash
+kubectl apply -f rolebinding.yaml
+```
+
+4. **Verify the Permissions**:
+Test if `demo-sa` can list pods (Should say "yes"):
+```bash
+kubectl auth can-i list pods --as=system:serviceaccount:dev:demo-sa --namespace=dev
+```
+Test if `demo-sa` can delete pods (Should say "no"):
+```bash
+kubectl auth can-i delete pods --as=system:serviceaccount:dev:demo-sa --namespace=dev
+```
 
 ---
 
-## Task 5 — Cleanup
-It is crucial to keep your cluster clean. Delete the resources we created:
+## Task 6 — Helm & StatefulSets
+
+**Helm** is a package manager for Kubernetes. Rather than writing YAML files manually, we can install pre-configured packages (like databases) called "Charts." A database requires a **StatefulSet** because it needs persistent identity and data.
+
+Let's install **Redis** using Helm:
+
+1. Install the Helm CLI:
+```bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+```
+
+2. Add a generic Repository containing the Redis Chart (Wait for updates to finish):
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+3. Install Redis:
+```bash
+kubectl create namespace redis-app
+helm install redis bitnami/redis --namespace redis-app --set auth.enabled=true --set auth.password=mypassword --set master.persistence.enabled=true
+```
+
+4. Verify it was created as a **StatefulSet** (Notice the indexed naming convention `redis-master-0` instead of random characters):
+```bash
+kubectl get statefulset -n redis-app
+kubectl get pods -n redis-app
+```
+
+---
+
+## Task 7 — Cleanup
+It is crucial to keep your cluster clean. Let's practice deleting everything we created today:
 
 ```bash
+# Delete Helm release
+helm uninstall redis -n redis-app
+
+# Delete RBAC infrastructure
+kubectl delete -f rolebinding.yaml
+kubectl delete -f role.yaml
+
+# Delete Base infrastructure
 kubectl delete -f config-pod.yaml
 kubectl delete -f app-config.yaml
 kubectl delete -f nodeport-service.yaml
 kubectl delete -f deployment.yaml
+
+# Delete Namespaces
+kubectl delete namespace redis-app
+kubectl delete namespace dev
 ```
 
-You are now ready for the **E-Commerce Capstone Project**!
+You are now officially a Kubernetes expert. Head over to **Phase 10: Capstone Project** to deploy a comprehensive E-Commerce Application!
