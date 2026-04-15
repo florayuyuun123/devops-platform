@@ -1,30 +1,153 @@
 # Kubernetes — Container Orchestration at Scale
 
-Kubernetes (often called K8s) is the industry standard for running containerized apps. While Docker runs one container, Kubernetes runs *thousands* of containers across hundreds of servers. It is the most valuable skill on a DevOps resume today.
+Kubernetes (often called K8s) is the industry standard for running containerized applications. While Docker runs a single container, Kubernetes orchestrates thousands of containers across hundreds of servers intelligently. It is one of the most critical skills on a DevOps resume today.
 
 ---
 
-## Task 1 — Core Architecture (The "Team")
+## Task 1 — Provision the Local Cluster
 
-### The Concept (What)
-- **Pod** — The smallest unit (like a single worker).
-- **Deployment** — The manager that ensures you always have the right number of workers.
-- **Service** — The "Phone Number" used to reach your workers.
-- **Node** — the physical or virtual server where the workers live.
+### The Concept
+Before interacting with Kubernetes, you need a running cluster. In this sandbox, we use **Minikube**, which creates a local, lightweight Kubernetes cluster inside Docker.
 
-### Real-world Context (Why)
-If a server crashes in the middle of the night, Kubernetes notices instantly. It will automatically move your "Pods" to a healthy server before your customers even notice something went wrong.
+### Execution
+Start the Minikube cluster using the Docker driver. This will take a few moments to provision your local node.
 
-### Execution (How)
-Explore the cluster using `kubectl`.
+```bash
+minikube start --driver=docker
+```
+
+Once it completes, verify that your node is ready and you can reach the cluster:
 
 ```bash
 kubectl get nodes
 ```
 
+---
+
+## Task 2 — Working with Pods
+
+### The Concept
+A **Pod** is the smallest deployable unit in Kubernetes. It encapsulates one or more containers (usually just one) and provides them with shared storage and network resources.
+
+### Execution
+Examine and deploy `nginx-pod.yaml`. It defines a single Pod running the `nginx` image.
+
 ```bash
-kubectl get namespaces
+cat > nginx-pod.yaml << 'K8EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      ports:
+        - containerPort: 80
+K8EOF
 ```
+
+Apply the configuration to your cluster:
+
+```bash
+kubectl apply -f nginx-pod.yaml
+```
+
+Check the status of your pod:
+
+```bash
+kubectl get pods
+```
+
+View detailed creation events (essential for debugging):
+
+```bash
+kubectl describe pod sample-pod
+```
+
+View the IP and Node assignment given to the Pod:
+
+```bash
+kubectl get pod -o wide
+```
+
+---
+
+## Task 3 — Working with Deployments
+
+### The Concept
+A **Deployment** is a manager that controls your Pods. Instead of manually starting and monitoring containers, you tell a Deployment what you want (e.g., "I want 3 Nginx replicas running"), and it continuously ensures that exact state exists. If a node crashes, the Deployment immediately spins up new Pods elsewhere.
+
+### Execution
+Define a Deployment in `nginx-deployment.yaml` for 3 replicas:
+
+```bash
+cat > nginx-deployment.yaml << 'DEPEOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+          ports:
+            - containerPort: 80
+DEPEOF
+```
+
+Apply the deployment:
+
+```bash
+kubectl apply -f nginx-deployment.yaml
+```
+
+Verify the deployment and the ReplicaSets it manages:
+
+```bash
+kubectl get deployments
+```
+
+```bash
+kubectl get replicasets
+```
+
+See all the managed pods spanning up:
+
+```bash
+kubectl get pods
+```
+
+---
+
+## Task 4 — Scaling and Introspection
+
+### The Concept
+Deployments make scaling applications effortless. If your app experiences a spike in traffic, you can increase the replica count in seconds.
+
+### Execution
+Scale your deployment up to 5 replicas:
+
+```bash
+kubectl scale deployment nginx-deployment --replicas=5
+```
+
+Watch the new pods being created in real time (use `Ctrl+C` to exit):
+
+```bash
+kubectl get pods --watch
+```
+
+List pods across *all namespaces* to see the core Kubernetes systems running:
 
 ```bash
 kubectl get pods -A
@@ -32,135 +155,27 @@ kubectl get pods -A
 
 ---
 
-## Task 2 — Your First Deployment
+## Task 5 — Cleanup
 
-### The Concept (What)
-A **Deployment** is a YAML file that describes the "Desired State" of your app (e.g., "I want 3 copies of Nginx running").
-
-### Real-world Context (Why)
-Instead of manually starting 3 containers, you tell Kubernetes what you want, and it *guarantees* that state. If one container dies, Kubernetes starts a new one automatically.
-
-### Execution (How)
-Create and apply your first deployment.
+Delete the resources to free up the cluster. It's best practice to keep your cluster clean.
 
 ```bash
-cat > deployment.yml << 'K8EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: my-app
-  template:
-    metadata:
-      labels:
-        app: my-app
-    spec:
-      containers:
-      - name: my-app
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-K8EOF
+# Delete the individual pod
+kubectl delete pod sample-pod
 ```
 
 ```bash
-kubectl apply -f deployment.yml
+# Delete the deployment (which automatically deletes its 5 managed pods)
+kubectl delete deployment nginx-deployment
 ```
+
+Verify everything is removing gracefully:
 
 ```bash
 kubectl get pods
-```
-
----
-
-## Task 3 — Exposing with a Service
-
-### The Concept (What)
-A **Service** provides a single, stable IP address or name to reach your group of Pods.
-
-### Real-world Context (Why)
-Pods are temporary; they get deleted and recreated with new IP addresses all the time. A Service acts like a "Front Desk" that always knows where to find the active Pods.
-
-### Execution (How)
-Create a Service to route traffic to your 3 Nginx pods.
-
-```bash
-cat > service.yml << 'SVCEOF'
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-service
-spec:
-  selector:
-    app: my-app
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
-SVCEOF
-```
-
-```bash
-kubectl apply -f service.yml
-```
-
-```bash
-kubectl get services
-```
-
----
-
-## Task 4 — Scaling and Rollbacks
-
-### The Concept (What)
-Scaling is changing the number of running pods. A Rollback is "undoing" a bad update.
-
-### Real-world Context (Why)
-If your app goes viral on TikTok, you can scale from 3 pods to 300 pods in seconds. If you push a bad update that breaks the site, you can "Rollback" to the previous working version instantly.
-
-### Execution (How)
-Scale your app to 5 replicas and then practice an update.
-
-```bash
-kubectl scale deployment my-app --replicas=5
-```
-
-```bash
-kubectl get pods
-```
-
-```bash
-kubectl rollout history deployment/my-app
-```
-
----
-
-## Task 5 — Debugging (Investigation)
-
-### The Concept (What)
-Using `logs` and `describe` to find out why a pod is failing.
-
-### Real-world Context (Why)
-90% of a DevOps Engineer's day is spent investigating why something isn't working. `kubectl describe` is your best friend—it tells you the exact error (e.g., "Out of Memory" or "Image not found").
-
-### Execution (How)
-Check the logs of one of your pods.
-
-```bash
-POD_NAME=$(kubectl get pods -l app=my-app -o jsonpath="{.items[0].metadata.name}")
-kubectl logs $POD_NAME
-```
-
-```bash
-kubectl describe pod $POD_NAME
 ```
 
 ---
 
 ## Challenge
-Try to scale your deployment to **0** replicas. What happens when you run `kubectl get pods`? Then scale it back to **3**. This is how we gracefully shut down or restart entire applications!
+Can you scale a deployment to **0** replicas? Try re-applying your `nginx-deployment.yaml`, then run `kubectl scale deployment nginx-deployment --replicas=0`. Check `kubectl get pods` to see what happens. This is how we gracefully shut down applications for maintenance!

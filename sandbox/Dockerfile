@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     net-tools iputils-ping dnsutils nmap netcat-openbsd tmux \
     python3 python3-pip ansible \
     openssh-client openssh-server \
-    sudo man-db unzip \
+    sudo man-db unzip conntrack \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
@@ -14,6 +14,11 @@ RUN apt-get update && apt-get install -y \
 RUN curl -LO "https://dl.k8s.io/release/$(curl -Ls \
     https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
     && chmod +x kubectl && mv kubectl /usr/local/bin/
+
+# minikube
+RUN curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
+    && chmod +x minikube && mv minikube /usr/local/bin/
+
 
 # terraform
 RUN wget -q https://releases.hashicorp.com/terraform/1.7.0/terraform_1.7.0_linux_amd64.zip \
