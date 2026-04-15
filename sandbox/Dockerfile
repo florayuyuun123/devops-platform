@@ -48,4 +48,4 @@ USER student
 
 # Default command: serve a web terminal on port 7681
 EXPOSE 7681
-CMD ["ttyd", "-p", "7681", "tmux", "new-session", "-A", "-s", "devops", "bash", "--login"]
+CMD ["ttyd", "-p", "7681", "bash", "--login"]
