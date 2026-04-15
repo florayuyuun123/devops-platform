@@ -337,3 +337,40 @@ async def terminal_ws(websocket: WebSocket, container_name: str):
             await websocket.close()
         except Exception:
             pass
+
+@app.get("/view/{container_name}/{port_num}/{path:path}")
+async def preview_proxy(container_name: str, port_num: int, path: str, request: Request):
+    # Verify sandbox is active
+    if container_name not in SANDBOX_REGISTRY:
+        raise HTTPException(status_code=404, detail="Sandbox session not found")
+    
+    # Since sandboxes use network:host, we hit localhost directly
+    target_url = "http://localhost:{}/{}".format(port_num, path)
+    if request.url.query:
+        target_url += "?" + request.url.query
+
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as c:
+            # Forward headers (excluding Host)
+            headers = {k: v for k, v in request.headers.items() if k.lower() != "host"}
+            resp = await c.get(target_url, headers=headers)
+            
+            content = resp.content
+            content_type = resp.headers.get("content-type", "")
+            
+            # HTML Injection: Fix relative links using <base> tag
+            if "text/html" in content_type:
+                base_url = "/api/view/{}/{}/".format(container_name, port_num)
+                base_tag = '<base href="{}">'.format(base_url).encode()
+                if b"<head>" in content:
+                    content = content.replace(b"<head>", b"<head>" + base_tag)
+                else:
+                    content = base_tag + content
+
+            return Response(
+                content=content,
+                status_code=resp.status_code,
+                headers={k: v for k, v in resp.headers.items() if k.lower() not in ["content-length", "content-encoding", "transfer-encoding"]}
+            )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail="Failed to reach application on port {}: {}".format(port_num, e))

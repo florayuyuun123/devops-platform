@@ -454,6 +454,8 @@ function renderLab(lab) {
        <button class="btn btn-success btn-sm" onclick="startSandbox('${lab.id}')">
          ${running ? 'Open terminal' : '▶ Start lab'}
        </button>
+       ${running && lab.preview_port ? `<button class="btn btn-primary btn-sm" style="background:var(--accent2)"
+         onclick="openPreview('${activeSandbox.container}', ${lab.preview_port})">🌐 Preview App</button>` : ''}
        ${running ? `<button class="btn btn-danger btn-sm"
          onclick="stopSandbox('${activeSandbox.container}')">■ Stop lab</button>` : ''}
        <div class="sandbox-status ${running?'running':''}" id="sandbox-status">
@@ -462,6 +464,10 @@ function renderLab(lab) {
        ${running ? `<div class="timer-box" id="lab-timer" style="margin-left:auto;">00:00</div>` : ''}
      </div>
      <div class="lab-content">${md(lab.content || lab.description || '')}</div>
+     <div style="display:flex; align-items:center; gap:16px; margin-top:32px;">
+       <h3 style="margin:0; font-size:16px; text-transform:uppercase; color:var(--muted); letter-spacing:1px;">Progress Validation</h3>
+       ${running ? `<button class="btn btn-sm" style="background:var(--surface2); border:1px solid var(--border); padding:4px 12px; font-size:12px;" onclick="pollProgress('${lab.id}')">↻ Run Check</button>` : ''}
+     </div>
      <div id="pipeline-ui"></div>`;
      if (running) startTimer(activeSandbox.started, activeSandbox.duration || lab.duration_minutes || 60);
      pollProgress(lab.id);
@@ -636,6 +642,11 @@ async function startSandbox(labId) {
     document.getElementById('sandbox-status').textContent = 'Failed to start lab';
     console.error('Sandbox error:', e);
   }
+}
+
+function openPreview(container, port) {
+  const url = `${API}/view/${container}/${port}/`;
+  window.open(url, '_blank');
 }
 
 async function stopSandbox(name, force = false) {
