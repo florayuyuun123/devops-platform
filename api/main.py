@@ -129,6 +129,10 @@ def start_sandbox(req: SandboxRequest):
         subprocess.run(["docker","cp", alp + "/.", cn + ":/home/student/lab/"])
         subprocess.run(["docker","exec","-u","root",cn,"chown","-R","student:student","/home/student/lab"])
         print("LOG: Lab files injected successfully")
+    
+    # Bypass Host-Container GID mismatches for Docker integration
+    subprocess.run(["docker","exec","-u","root",cn,"chmod","666","/var/run/docker.sock"])
+    print("LOG: Docker socket permissions explicitly relaxed for student access")
 
     # ── ttyd Readiness Check ─────────────────────────────────────
     # Wait until ttyd is actually listening before telling the browser to load.
