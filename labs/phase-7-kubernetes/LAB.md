@@ -101,6 +101,12 @@ kubectl get services
 ```
 *Since we mapped it to `30080`, any traffic hitting the Node on `30080` will be routed to your Nginx pods.*
 
+#### 🌐 Browser Verification
+Now that you've exposed the service, let's see it in action:
+1. Look at the top of this Lab page and find the **🌐 Preview App** button.
+2. Click it! A new browser tab should open showing the "Welcome to Nginx" page.
+3. *Note: It may take up to 20 seconds for the Kubernetes cluster to fully bridge the network port.*
+
 ---
 
 ## Task 4 — ConfigMaps and Storage

@@ -212,21 +212,25 @@ kubectl apply -f ecommerce-service.yaml
 
 ---
 
-## Phase E — Final Testing
+## Phase E — Final Testing and Browser Preview
 
 1. Get the status of all your platform's resources:
 ```bash
 kubectl get all -n ecommerce
 ```
 
-2. Because you are inside the secure sandbox terminal, we will test the connectivity by utilizing Kubernetes Port Forwarding to tunnel into the Service:
-```bash
-kubectl port-forward --address 0.0.0.0 service/ecommerce-service 8082:80 -n ecommerce &
-```
+2. **🌐 Real-World Browser Preview**:
+Now that your E-Commerce service is live on port **30082**, let's view it in your browser:
+*   Look at the top of this Lab page and click the **🌐 Preview App** button.
+*   A new browser tab will open showing your **MS2 E-Commerce Platform**!
+*   *Note: It may take up to 20 seconds for the cluster networking to fully bridge after click.*
 
-3. Download the webpage we just served via Kubernetes:
+3. (Self-Correction/Manual Check) If you want to verify via terminal instead:
 ```bash
-curl http://localhost:8082
+# Get the IP of your cluster
+MINIKUBE_IP=$(minikube ip)
+# Fetch the HTML
+curl http://${MINIKUBE_IP}:30082
 ```
 
 ## Congratulations! 🎉

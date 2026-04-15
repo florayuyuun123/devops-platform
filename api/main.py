@@ -340,18 +340,31 @@ async def terminal_ws(websocket: WebSocket, container_name: str):
 
 @app.get("/view/{container_name}/{port_num}/{path:path}")
 async def preview_proxy(container_name: str, port_num: int, path: str, request: Request):
-    # Verify sandbox is active
     if container_name not in SANDBOX_REGISTRY:
         raise HTTPException(status_code=404, detail="Sandbox session not found")
     
-    # Since sandboxes use network:host, we hit localhost directly
-    target_url = "http://localhost:{}/{}".format(port_num, path)
+    # Smart Discovery: Try to find the internal Minikube IP inside the container
+    # We cache this in the registry so we only run 'minikube ip' once.
+    target_ip = SANDBOX_REGISTRY[container_name].get("k8s_ip")
+    if not target_ip:
+        try:
+            # Low timeout because if it's not a K8s lab, this will fail or hang
+            r = subprocess.run(["docker","exec",container_name,"minikube","ip"], capture_output=True, text=True, timeout=2)
+            if r.returncode == 0 and r.stdout.strip():
+                target_ip = r.stdout.strip()
+                SANDBOX_REGISTRY[container_name]["k8s_ip"] = target_ip
+                save_registry()
+            else:
+                target_ip = "localhost"
+        except:
+            target_ip = "localhost"
+
+    target_url = "http://{}:{}/{}".format(target_ip, port_num, path)
     if request.url.query:
         target_url += "?" + request.url.query
 
     try:
         async with httpx.AsyncClient(timeout=10, follow_redirects=True) as c:
-            # Forward headers (excluding Host)
             headers = {k: v for k, v in request.headers.items() if k.lower() != "host"}
             resp = await c.get(target_url, headers=headers)
             
@@ -360,6 +373,7 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
             
             # HTML Injection: Fix relative links using <base> tag
             if "text/html" in content_type:
+                # IMPORTANT: Use the /api/view/ prefix so Nginx routes correctly
                 base_url = "/api/view/{}/{}/".format(container_name, port_num)
                 base_tag = '<base href="{}">'.format(base_url).encode()
                 if b"<head>" in content:
@@ -373,4 +387,4 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
                 headers={k: v for k, v in resp.headers.items() if k.lower() not in ["content-length", "content-encoding", "transfer-encoding"]}
             )
     except Exception as e:
-        raise HTTPException(status_code=502, detail="Failed to reach application on port {}: {}".format(port_num, e))
+        raise HTTPException(status_code=502, detail="Failed to reach app on {}:{}. Error: {}".format(target_ip, port_num, e))
