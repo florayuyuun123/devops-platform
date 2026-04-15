@@ -2,6 +2,9 @@
 
 This is what you've been working toward! You are now going to deploy a complete **E-Commerce Application** using Kubernetes. This isn't just a lab—this is your **Portfolio Project**. It brings together everything you've learned: Deployments, ConfigMaps, Networking, and Container Security.
 
+> [!NOTE]
+> **Automated Validation:** Just like the previous module, this project uses the "Progress Validation" pipeline at the bottom of the page. Watch it turn **Green** as you build your platform!
+
 ---
 
 ## Phase A — Architecture and Namespace
@@ -23,6 +26,10 @@ Check your namespaces:
 ```bash
 kubectl get namespaces
 ```
+
+**✅ How to Prove It:**
+*   You should see the `ecommerce` namespace in the list.
+*   This proves your platform is logically isolated from the rest of the cluster!
 
 ---
 
@@ -178,6 +185,11 @@ Check your deployment's status carefully to ensure the container started securel
 ```bash
 kubectl get pods -n ecommerce
 ```
+
+**✅ How to Prove It:**
+*   Run `kubectl get pods -n ecommerce`. You should see one pod for `ecommerce-app` with status **Running**.
+*   Run `kubectl describe pod -n ecommerce -l app=ecommerce-app`. Look at the **Volumes** section to verify that `ecommerce-html` is mounted.
+*   Check the **SecurityContext**: You should see that it's correctly running as a restricted user (UID 1000).
 
 ---
 

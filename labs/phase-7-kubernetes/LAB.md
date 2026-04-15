@@ -2,6 +2,9 @@
 
 Kubernetes (often called K8s) is the industry standard for running containerized applications intelligently across fleets of servers. This module covers everything from basic Pods to Services, ConfigMaps, RBAC Security, and Helm package management.
 
+> [!NOTE]
+> **Automated Validation:** This lab has a built-in "Progress Validation" system. As you complete each task, look at the bottom of the page; the pipeline nodes will turn **Green** automatically.
+
 ---
 
 ## Task 1 — Provision the Local Cluster
@@ -20,11 +23,12 @@ minikube start --driver=docker
 > [!TIP]
 > **Troubleshooting:** If the startup fails with a "version" or "state" error, run `minikube delete --all --purge` and then try the start command again.
 
-Verify the node is ready:
-
 ```bash
 kubectl get nodes
 ```
+**✅ How to Prove It:**
+*   You should see a node named `minikube` with the status **Ready**.
+*   The "Automated Progress" node (Task 1) at the bottom of your screen should turn **Green**.
 
 ---
 
@@ -64,11 +68,14 @@ kubectl apply -f deployment.yaml
 kubectl get pods
 ```
 
-Scale it up to 5 replicas instantly:
 ```bash
 kubectl scale deployment nginx-deployment --replicas=5
 kubectl get pods
 ```
+
+**✅ How to Prove It:**
+*   Run `kubectl get deployment nginx-deployment`. You should see `5/5` replicas available.
+*   Run `kubectl get pods -l app=nginx`. You should see 5 unique pod IDs all marked as **Running**.
 
 ---
 
@@ -154,6 +161,11 @@ EOF
 kubectl apply -f config-pod.yaml
 ```
 
+**✅ How to Prove It:**
+*   Run `kubectl exec config-demo-pod -- cat /usr/share/nginx/html/index.html`. 
+*   If correct, you will see the HTML code you wrote in the ConfigMap printed to your terminal!
+*   This proves Kubernetes is successfully "mounting" your virtual configuration as a real file.
+
 ---
 
 ## Task 5 — Role-Based Access Control (RBAC)
@@ -216,6 +228,11 @@ Test if `demo-sa` can delete pods (Should say "no"):
 kubectl auth can-i delete pods --as=system:serviceaccount:dev:demo-sa --namespace=dev
 ```
 
+**✅ How to Prove It:**
+*   The output for the first command (list) should be `yes`.
+*   The output for the second command (delete) should be `no`.
+*   This proves that Kubernetes RBAC is protecting your cluster by allowing only specific actions!
+
 ---
 
 ## Task 6 — Helm & StatefulSets
@@ -248,6 +265,10 @@ helm install redis bitnami/redis --namespace redis-app --set auth.enabled=true -
 kubectl get statefulset -n redis-app
 kubectl get pods -n redis-app
 ```
+
+**✅ How to Prove It:**
+*   Run `helm list -n redis-app`. You should see the `redis` chart with a status of `deployed`.
+*   Look at your Pod names. They use predictable indices (0, 1) instead of random characters. This proves your database has a stable "Stateful" identity.
 
 ---
 
