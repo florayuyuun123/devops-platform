@@ -1,22 +1,17 @@
-# Kubernetes — Container Orchestration at Scale
+# Kubernetes Masterclass — Orchestration at Scale
 
-Kubernetes (often called K8s) is the industry standard for running containerized applications. While Docker runs a single container, Kubernetes orchestrates thousands of containers across hundreds of servers intelligently. It is one of the most critical skills on a DevOps resume today.
+Kubernetes (often called K8s) is the industry standard for running containerized applications intelligently across fleets of servers. This module covers everything from basic Pods to Services and ConfigMaps.
 
 ---
 
-## Task 1 — Provision the Local Cluster
+## Task 1 — Provision the Local Cluster (Day 1)
 
-### The Concept
-Before interacting with Kubernetes, you need a running cluster. In this sandbox, we use **Minikube**, which creates a local, lightweight Kubernetes cluster inside Docker.
-
-### Execution
-Start the Minikube cluster using the Docker driver. This will take a few moments to provision your local node.
+Before interacting with Kubernetes, we need a cluster. In this sandbox, you have full Docker engine access, so we will use **Minikube** with the Docker driver.
 
 ```bash
 minikube start --driver=docker
 ```
-
-Once it completes, verify that your node is ready and you can reach the cluster:
+*Wait a minute or two for the cluster to fully provision.* Verify the node is ready:
 
 ```bash
 kubectl get nodes
@@ -24,65 +19,14 @@ kubectl get nodes
 
 ---
 
-## Task 2 — Working with Pods
+## Task 2 — Pods & Deployments (Day 2)
 
-### The Concept
-A **Pod** is the smallest deployable unit in Kubernetes. It encapsulates one or more containers (usually just one) and provides them with shared storage and network resources.
+A **Pod** is the smallest unit (1+ containers). A **Deployment** manages those Pods, ensuring a specific number of replicas are always running.
 
-### Execution
-Examine and deploy `nginx-pod.yaml`. It defines a single Pod running the `nginx` image.
+Create a Deployment of 3 Nginx replicas:
 
 ```bash
-cat > nginx-pod.yaml << 'K8EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: sample-pod
-spec:
-  containers:
-    - name: nginx-container
-      image: nginx
-      ports:
-        - containerPort: 80
-K8EOF
-```
-
-Apply the configuration to your cluster:
-
-```bash
-kubectl apply -f nginx-pod.yaml
-```
-
-Check the status of your pod:
-
-```bash
-kubectl get pods
-```
-
-View detailed creation events (essential for debugging):
-
-```bash
-kubectl describe pod sample-pod
-```
-
-View the IP and Node assignment given to the Pod:
-
-```bash
-kubectl get pod -o wide
-```
-
----
-
-## Task 3 — Working with Deployments
-
-### The Concept
-A **Deployment** is a manager that controls your Pods. Instead of manually starting and monitoring containers, you tell a Deployment what you want (e.g., "I want 3 Nginx replicas running"), and it continuously ensures that exact state exists. If a node crashes, the Deployment immediately spins up new Pods elsewhere.
-
-### Execution
-Define a Deployment in `nginx-deployment.yaml` for 3 replicas:
-
-```bash
-cat > nginx-deployment.yaml << 'DEPEOF'
+cat > deployment.yaml << 'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -102,80 +46,116 @@ spec:
           image: nginx:1.19
           ports:
             - containerPort: 80
-DEPEOF
+EOF
 ```
 
-Apply the deployment:
-
+Apply and verify:
 ```bash
-kubectl apply -f nginx-deployment.yaml
+kubectl apply -f deployment.yaml
+kubectl get pods
 ```
 
-Verify the deployment and the ReplicaSets it manages:
-
+Scale it up to 5 replicas instantly:
 ```bash
-kubectl get deployments
-```
-
-```bash
-kubectl get replicasets
-```
-
-See all the managed pods spanning up:
-
-```bash
+kubectl scale deployment nginx-deployment --replicas=5
 kubectl get pods
 ```
 
 ---
 
-## Task 4 — Scaling and Introspection
+## Task 3 — Services and Networking (Day 3)
 
-### The Concept
-Deployments make scaling applications effortless. If your app experiences a spike in traffic, you can increase the replica count in seconds.
+Pods die and get new IPs. A **Service** provides a stable IP or port to reach them. We will create a `ClusterIP` (internal access only) and a `NodePort` (external access).
 
-### Execution
-Scale your deployment up to 5 replicas:
-
+Create a NodePort Service:
 ```bash
-kubectl scale deployment nginx-deployment --replicas=5
+cat > nodeport-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+EOF
 ```
 
-Watch the new pods being created in real time (use `Ctrl+C` to exit):
-
+Apply and observe the assigned ports:
 ```bash
-kubectl get pods --watch
+kubectl apply -f nodeport-service.yaml
+kubectl get services
+```
+*Since we mapped it to `30080`, any traffic hitting the Node on `30080` will be routed to your Nginx pods.*
+
+---
+
+## Task 4 — ConfigMaps and Storage (Day 4)
+
+We use **ConfigMaps** to inject configuration files into containers without rebuilding images.
+
+Create a simple ConfigMap that holds an HTML index page:
+```bash
+cat > app-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  index.html: |
+    <h1>Welcome to the K8s Masterclass!</h1>
+    <p>Stored completely inside a ConfigMap.</p>
+EOF
+```
+```bash
+kubectl apply -f app-config.yaml
 ```
 
-List pods across *all namespaces* to see the core Kubernetes systems running:
-
+Now, let's mount this ConfigMap into a new Pod so Nginx serves our custom HTML!
 ```bash
-kubectl get pods -A
+cat > config-pod.yaml << 'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-demo-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:alpine
+      volumeMounts:
+      - name: config-volume
+        mountPath: /usr/share/nginx/html
+  volumes:
+    - name: config-volume
+      configMap:
+        name: app-config
+EOF
 ```
+```bash
+kubectl apply -f config-pod.yaml
+```
+
+Wait until it runs, then test it from inside the cluster using port-forwarding:
+```bash
+kubectl port-forward pod/config-demo-pod 8080:80 &
+curl http://localhost:8080
+```
+*(Press Enter to return to the prompt after checking the output, then `kill %1` to stop port-forwarding).*
 
 ---
 
 ## Task 5 — Cleanup
-
-Delete the resources to free up the cluster. It's best practice to keep your cluster clean.
-
-```bash
-# Delete the individual pod
-kubectl delete pod sample-pod
-```
+It is crucial to keep your cluster clean. Delete the resources we created:
 
 ```bash
-# Delete the deployment (which automatically deletes its 5 managed pods)
-kubectl delete deployment nginx-deployment
+kubectl delete -f config-pod.yaml
+kubectl delete -f app-config.yaml
+kubectl delete -f nodeport-service.yaml
+kubectl delete -f deployment.yaml
 ```
 
-Verify everything is removing gracefully:
-
-```bash
-kubectl get pods
-```
-
----
-
-## Challenge
-Can you scale a deployment to **0** replicas? Try re-applying your `nginx-deployment.yaml`, then run `kubectl scale deployment nginx-deployment --replicas=0`. Check `kubectl get pods` to see what happens. This is how we gracefully shut down applications for maintenance!
+You are now ready for the **E-Commerce Capstone Project**!

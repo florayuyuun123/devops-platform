@@ -1,137 +1,233 @@
-# Capstone Project — The Production-Grade App
+# Capstone Project — The E-Commerce Deployment
 
-This is what you've been working toward! You are now going to build a complete deployment pipeline for a web application that demonstrates every single skill you've learned. This isn't just a lab—this is your **Portfolio Project**. Show this to every recruiter and hiring manager.
-
----
-
-## Phase A — Repository Architecture (The "Library")
-
-### The Concept (What)
-We create a highly organized directory structure to hold our App, our Ansible playbooks, our Kubernetes manifests, and our Monitoring configs.
-
-### Real-world Context (Why)
-A messy repository is a sign of a junior engineer. A clean, modular structure tells an employer that you understand how to manage complex, enterprise-scale projects.
-
-### Execution (How)
-Initialize your capstone folder and build the structure.
-
-```bash
-mkdir -p ~/capstone-devops && cd ~/capstone-devops
-```
-
-```bash
-mkdir -p app ansible k8s monitoring .github/workflows
-```
+This is what you've been working toward! You are now going to deploy a complete **E-Commerce Application** using Kubernetes. This isn't just a lab—this is your **Portfolio Project**. It brings together everything you've learned: Deployments, ConfigMaps, Networking, and Container Security.
 
 ---
 
-## Phase B — Building the Application (Docker)
+## Phase A — Architecture and Namespace
 
-### The Concept (What)
-We write a professional Python application that includes "Health Checks" and "Metrics," then package it into a Docker image.
+### The Concept
+A professional deployment isolates its resources. We will start by creating a dedicated **Namespace** for our e-commerce platform.
 
-### Real-world Context (Why)
-In production, a load balancer needs to know if your app is "healthy" before it sends traffic. By adding a `/health` endpoint, you are making your app "Cloud-Native."
-
-### Execution (How)
-Create the app and the Dockerfile.
+### Execution
 
 ```bash
-cat > app/app.py << 'APPEOF'
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, os, datetime
-
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_response(200); self.end_headers()
-            self.wfile.write(b'{"status": "ok"}')
-        else:
-            self.send_response(200); self.end_headers()
-            self.wfile.write(b'{"message": "DevOps Capstone App"}')
-
-HTTPServer(('', 8080), Handler).serve_forever()
-APPEOF
+minikube start --driver=docker
 ```
 
 ```bash
-cat > app/Dockerfile << 'DFEOF'
-FROM python:3.11-slim
-WORKDIR /app
-COPY app.py .
-EXPOSE 8080
-CMD ["python3", "app.py"]
-DFEOF
+kubectl create namespace ecommerce
+```
+
+Check your namespaces:
+```bash
+kubectl get namespaces
 ```
 
 ---
 
-## Phase C — Automation (CI/CD)
+## Phase B — The Frontend ConfigMap
 
-### The Concept (What)
-We create a GitHub Actions pipeline that builds, tests, and pushes our image automatically.
+### The Concept
+Instead of hardcoding our website HTML into a Docker image, we will store the entire E-Commerce frontend inside a Kubernetes **ConfigMap**. This allows us to update the website without rebuilding containers!
 
-### Real-world Context (Why)
-You want to be the "Engineer of 10x Impact." Automation means you spend your time designing systems, not manually running commands.
+### Execution
+Create the massive ConfigMap containing the E-Commerce HTML frontend. *Copy and paste this entire block carefully!*
 
-### Execution (How)
-An example of your final `.github/workflows/pipeline.yml` structure.
+```bash
+cat > ecommerce-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-html
+  namespace: ecommerce
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>MS2 E-Commerce Platform</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+            .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h1 { color: #2c3e50; text-align: center; }
+            .form-group { margin-bottom: 15px; }
+            label { display: block; margin-bottom: 5px; font-weight: bold; }
+            input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+            button { background: #3498db; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; }
+            button:hover { background: #2980b9; }
+            .status { background: #e8f5e8; padding: 15px; border-radius: 5px; margin-top: 20px; }
+            .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+            .product { border: 1px solid #ddd; padding: 15px; border-radius: 5px; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>MS2 E-Commerce Platform</h1>
+            <p><strong>Powered by Kubernetes Microservices</strong></p>
+            <div class="product-grid">
+                <div class="product">
+                    <h3>Smartphone Pro</h3>
+                    <p>Price: $899</p>
+                    <button onclick="selectProduct('Smartphone Pro', 899)">Select</button>
+                </div>
+                <div class="product">
+                    <h3>Laptop Ultra</h3>
+                    <p>Price: $1299</p>
+                    <button onclick="selectProduct('Laptop Ultra', 1299)">Select</button>
+                </div>
+            </div>
+            <form id="orderForm" onsubmit="submitOrder(event)">
+                <h2>Customer Order Form</h2>
+                <div class="form-group">
+                    <label>Full Name:</label>
+                    <input type="text" name="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label>Selected Product:</label>
+                    <input type="text" id="product" name="product" readonly>
+                </div>
+                <button type="submit">Place Order</button>
+            </form>
+            <div class="status">
+                <h3>Kubernetes Infrastructure Status</h3>
+                <p>NGINX Gateway: Active | Namespace: ecommerce</p>
+            </div>
+        </div>
+        <script>
+            let selectedPrice = 0;
+            function selectProduct(name, price) {
+                document.getElementById('product').value = name;
+                selectedPrice = price;
+            }
+            function submitOrder(event) {
+                event.preventDefault();
+                alert('Order Submitted Successfully!\nOrder ID: K8S-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+            }
+        </script>
+    </body>
+    </html>
+EOF
+```
 
-```yaml
-name: Full CI/CD Pipeline
-on: [push]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and Test
-        run: docker build -t capstone-app .
+```bash
+kubectl apply -f ecommerce-config.yaml
 ```
 
 ---
 
-## Phase D — Infrastructure (Kubernetes)
+## Phase C — The Application Deployment
 
-### The Concept (What)
-We write the Kubernetes manifest to deploy our app with **High Availability** (3 replicas).
+### The Concept
+We will deploy a Python HTTP Server using best-practice Kubernetes security configurations (Running as Non-Root, restricted Pod resources, and comprehensive Health Probes).
 
-### Real-world Context (Why)
-If you only run 1 copy of your app, and it crashes, the site is down. By running 3 copies, you ensure that your business never goes offline.
+### Execution
+Define the deployment that mounts our ConfigMap as the `/app` root directory.
 
-### Execution (How)
-Create the final Kubernetes Deployment.
-
-```yaml
+```bash
+cat > ecommerce-app.yaml << 'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: capstone-app
+  name: ecommerce-app
+  namespace: ecommerce
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: capstone-app
+      app: ecommerce-app
   template:
     metadata:
       labels:
-        app: capstone-app
+        app: ecommerce-app
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
-      - name: capstone-app
-        image: yourname/capstone-app:latest
+      - name: python-server
+        image: python:3.9-alpine
+        command: ["python", "-m", "http.server", "8080"]
+        workingDir: /app
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+        volumeMounts:
+        - name: html-content
+          mountPath: /app
+      volumes:
+      - name: html-content
+        configMap:
+          name: ecommerce-html
+EOF
+```
+
+```bash
+kubectl apply -f ecommerce-app.yaml
+```
+
+Check your deployment's status carefully to ensure the container started securely:
+```bash
+kubectl get pods -n ecommerce
 ```
 
 ---
 
-## Final Submission Checklist
-To call yourself a Graduate of the DevOps Platform, your project must include:
-- [ ] GitHub repository with all code.
-- [ ] Working CI/CD pipeline (Green checkmark).
-- [ ] Optimized Dockerfile.
-- [ ] Kubernetes manifests for scaling.
-- [ ] `README.md` explaining YOUR architecture.
+## Phase D — Service Exposure 
 
-**This project is your ticket to a high-paying DevOps career. Good luck!**
+### The Concept
+The application is running inside the cluster. Now we must open an external port to allow customer web traffic in. We use a **NodePort** Service.
+
+### Execution
+
+```bash
+cat > ecommerce-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: ecommerce-app
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30082
+  type: NodePort
+EOF
+```
+
+```bash
+kubectl apply -f ecommerce-service.yaml
+```
+
+---
+
+## Phase E — Final Testing
+
+1. Get the status of all your platform's resources:
+```bash
+kubectl get all -n ecommerce
+```
+
+2. Because you are inside the secure sandbox terminal, we will test the connectivity by utilizing Kubernetes Port Forwarding to tunnel into the Service:
+```bash
+kubectl port-forward --address 0.0.0.0 service/ecommerce-service 8082:80 -n ecommerce &
+```
+
+3. Download the webpage we just served via Kubernetes:
+```bash
+curl http://localhost:8082
+```
+
+## Congratulations! 🎉
+You have formally architected, secured, deployed, and routed an entire Web Application using industry-standard Kubernetes conventions. You are ready for a DevOps career!
