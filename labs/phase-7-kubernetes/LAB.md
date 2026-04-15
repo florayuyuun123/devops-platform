@@ -11,7 +11,12 @@ Before interacting with Kubernetes, we need a cluster. In this sandbox, you have
 ```bash
 minikube start --driver=docker
 ```
-*Wait a minute or two for the cluster to fully provision.* Verify the node is ready:
+*Wait a minute or two for the cluster to fully provision.* 
+
+> [!TIP]
+> **Troubleshooting:** If the startup fails with a "version" or "state" error, run `minikube delete --all --purge` and then try the start command again.
+
+Verify the node is ready:
 
 ```bash
 kubectl get nodes

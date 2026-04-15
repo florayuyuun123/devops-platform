@@ -10,15 +10,13 @@ RUN apt-get update && apt-get install -y \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
-# kubectl
-RUN curl -LO "https://dl.k8s.io/release/$(curl -Ls \
-    https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+# kubectl (pinned to v1.30.0 for stability)
+RUN curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl" \
     && chmod +x kubectl && mv kubectl /usr/local/bin/
 
-# minikube
-RUN curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
+# minikube (pinned to v1.33.1 for stability)
+RUN curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.33.1/minikube-linux-amd64 \
     && chmod +x minikube && mv minikube /usr/local/bin/
-
 
 # terraform
 RUN wget -q https://releases.hashicorp.com/terraform/1.7.0/terraform_1.7.0_linux_amd64.zip \
@@ -35,6 +33,7 @@ RUN curl -Lo /usr/local/bin/ttyd \
 RUN useradd -m -s /bin/bash student \
     && echo "student:devops2024" | chpasswd \
     && usermod -aG sudo student \
+    && usermod -aG docker student \
     && echo "student ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
     && echo "export PS1='\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ '" > /etc/profile.d/99-colors.sh \
     && echo "alias ls='ls --color=auto'" >> /etc/profile.d/99-colors.sh \
