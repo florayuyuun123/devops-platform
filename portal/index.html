@@ -254,7 +254,7 @@
 <script>
 const isOffline = window.location.hostname === 'localhost' || /^[0-9.]+$/.test(window.location.hostname);
 const API = isOffline ? window.location.origin + '/api' : 'https://flip-organ-zero-citizenship.trycloudflare.com';
-let currentUser = null, currentToken = null, allLabs = [], activeSandbox = null;
+let currentUser = null, currentToken = null, allLabs = [], activeSandbox = null, activeLab = null;
 
 const PHASES = [
   {id:'phase-1-linux',       title:'Linux fundamentals'},
