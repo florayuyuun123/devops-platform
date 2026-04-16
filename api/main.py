@@ -391,21 +391,43 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
             else:
                 print(f"LOG: Preview Proxy: {path} | Type: '{content_type}'")
             
-            # HTML Injection: Fix relative links using <base> tag
+            # Robust HTML Detection & Injection
             if "text/html" in content_type:
-                # IMPORTANT: Use the /api/view/ prefix so Nginx routes correctly
                 base_url = "/api/view/{}/{}/".format(container_name, port_num)
-                base_tag = '<base href="{}">'.format(base_url).encode()
-                if b"<head>" in content:
-                    content = content.replace(b"<head>", b"<head>" + base_tag)
+                base_tag = f'<base href="{base_url}">'.encode()
+                
+                # Case-insensitive <head> search
+                head_index = content.lower().find(b"<head>")
+                if head_index != -1:
+                    # Insert after the <head> tag
+                    tag_end = head_index + 6
+                    content = content[:tag_end] + base_tag + content[tag_end:]
                 else:
-                    content = base_tag + content
+                    # Prepend AFTER the doctype if possible, or at the start
+                    doctype_index = content.lower().find(b"<!doctype html>")
+                    if doctype_index != -1:
+                        doc_end = doctype_index + 15
+                        content = content[:doc_end] + base_tag + content[doc_end:]
+                    else:
+                        content = base_tag + content
+
+            # Prepare final headers with Strict Cache-Control
+            final_headers = {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "X-Content-Type-Options": "nosniff"
+            }
+            # Forward other safe headers from target
+            for k, v in resp.headers.items():
+                if k.lower() not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma", "expires"]:
+                    final_headers[k] = v
 
             return Response(
                 content=content,
                 status_code=resp.status_code,
                 media_type=content_type,
-                headers={k: v for k, v in resp.headers.items() if k.lower() not in ["content-length", "content-encoding", "transfer-encoding", "content-type"]}
+                headers=final_headers
             )
     except Exception as e:
         raise HTTPException(status_code=502, detail="Failed to reach app on {}:{}. Error: {}".format(target_ip, port_num, e))
