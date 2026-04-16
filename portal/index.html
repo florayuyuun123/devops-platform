@@ -557,8 +557,8 @@ function renderPipeline(stages) {
 function md(t) {
   if (!t) return '';
   
-  // Aggressive Title Normalization: Strip the first # title regardless of leading space or line endings
-  t = t.replace(/^\s*# .+(\r?\n)*/, '').trim();
+  // Total Title Suppression: Strip any leading # header regardless of whitespace, line endings, or characters.
+  t = t.replace(/^[\s\ufeff\xa0]*# .+(\r?\n)*/, '').trim();
 
   const stash = [];
   // 1. Protect code blocks
