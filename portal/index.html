@@ -42,6 +42,7 @@
   .sidebar{width:280px;min-width:280px;background:rgba(15, 17, 23, 0.4);border-right:1px solid var(--border);padding:24px 0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
   .sidebar-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);padding:0 20px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;}
 
+
   
   .phase-group{margin:0 12px 4px;border-radius:12px;overflow:hidden;border:1px solid transparent;transition:all 0.2s;}
   .phase-group:hover{background:rgba(255,255,255,0.02);}
@@ -294,6 +295,10 @@ function doLogout() {
   localStorage.clear(); currentUser = currentToken = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
 }
 
 async function showApp() {
