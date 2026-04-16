@@ -369,7 +369,19 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
             resp = await c.get(target_url, headers=headers)
             
             content = resp.content
-            content_type = resp.headers.get("content-type", "")
+            content_type = resp.headers.get("content-type", "").lower()
+            
+            # Smart Header Detection Fallback
+            if not content_type or "text/plain" in content_type:
+                low_path = path.lower()
+                if low_path.endswith(".html") or low_path == "" or b"<!doctype html" in content.lower()[:200]:
+                    content_type = "text/html"
+                elif low_path.endswith(".css"):
+                    content_type = "text/css"
+                elif low_path.endswith(".js"):
+                    content_type = "application/javascript"
+                elif low_path.endswith((".png", ".jpg", ".jpeg", ".gif")):
+                    content_type = "image/" + low_path.split(".")[-1]
             
             # HTML Injection: Fix relative links using <base> tag
             if "text/html" in content_type:
