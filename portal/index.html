@@ -556,8 +556,11 @@ function renderPipeline(stages) {
 function md(t) {
   if (!t) return '';
   
-  // Total Title Suppression: Strip any leading # header regardless of whitespace, line endings, or characters.
+  // 1. Total Title Suppression
   t = t.replace(/^[\s\ufeff\xa0]*# .+(\r?\n)*/, '').trim();
+
+  // 2. CSS Isolation: Strip any <style> tags to prevent lab content from hijacking the platform UI
+  t = t.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gmi, '');
 
   const stash = [];
   // 1. Protect code blocks
