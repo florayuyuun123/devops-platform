@@ -421,12 +421,6 @@ function showPhase(phaseId) {
   const ph = PHASES.find(p => p.id === phaseId);
   const labs = allLabs.filter(l => l.id && l.id.startsWith(phaseId));
   
-  // Fast Navigation: If a phase only has 1 lab (like the Capstone), skip the overview and open directly
-  if (labs.length === 1) {
-    showLab(labs[0].id);
-    return;
-  }
-  
   // Custom Phase Intros (The Big Picture)
   const intros = {
     'phase-1-linux': 'Linux is the backbone of the cloud. Every server at Google, Amazon, and Netflix runs on Linux. To be a DevOps Engineer, you must speak the language of the kernel.',
