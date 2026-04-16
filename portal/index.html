@@ -62,7 +62,7 @@
   .lab-item.selected::before{background:var(--accent);box-shadow:0 0 8px var(--accent);}
 
   .lab-pane{flex:1;min-width:300px;overflow-y:auto;background:#0f1117;border-right:1px solid var(--border);position:relative;}
-  .content-inner{max-width:800px;padding:48px 40px;margin:0 auto;}
+  .content-inner{max-width:1100px;padding:48px 40px;margin:0 auto;}
 
   /* Standard Vertical Layout (Side by Side Terminal) */
   .terminal-pane{flex:1;min-width:300px;background:#020617;display:none;flex-direction:column;position:relative;}
@@ -416,6 +416,12 @@ function showWelcome() {
 function showPhase(phaseId) {
   const ph = PHASES.find(p => p.id === phaseId);
   const labs = allLabs.filter(l => l.id && l.id.startsWith(phaseId));
+  
+  // Fast Navigation: If a phase only has 1 lab (like the Capstone), skip the overview and open directly
+  if (labs.length === 1) {
+    showLab(labs[0].id);
+    return;
+  }
   
   // Custom Phase Intros (The Big Picture)
   const intros = {
