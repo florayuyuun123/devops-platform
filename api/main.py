@@ -369,47 +369,53 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
             resp = await c.get(target_url, headers=headers)
             
             content = resp.content
+            print(f"LOG: Preview Proxy HIT | Path: '{path}' | Size: {len(content)} bytes")
+            
             raw_type = resp.headers.get("content-type", "").lower()
-            # Strip charset/extra info for detection logic
             content_type = raw_type.split(";")[0].strip()
-            prev_type = content_type
             
-            # Smart Header Detection Fallback
-            if not content_type or content_type in ["text/plain", "application/octet-stream"]:
-                low_path = path.lower()
-                if low_path.endswith((".html", ".htm")) or low_path == "" or b"<!doctype html" in content.lower()[:500]:
-                    content_type = "text/html"
-                elif low_path.endswith(".css"):
-                    content_type = "text/css"
-                elif low_path.endswith(".js"):
-                    content_type = "application/javascript"
-                elif low_path.endswith((".png", ".jpg", ".jpeg", ".gif")):
-                    content_type = "image/" + low_path.split(".")[-1]
+            # Absolute Force-Render Logic
+            should_force_html = False
+            if not content_type or content_type in ["text/plain", "application/octet-stream", "binary/octet-stream"]:
+                should_force_html = True
             
-            if content_type != prev_type:
-                print(f"LOG: Preview Proxy [!] FORCED: {path} | '{raw_type}' -> '{content_type}'")
-            else:
-                print(f"LOG: Preview Proxy: {path} | Type: '{content_type}'")
-            
-            # Robust HTML Detection & Injection
-            if "text/html" in content_type:
+            # Double Check: If it clearly looks like HTML, force it.
+            low_content = content.lower()[:1000]
+            if b"<!doctype html" in low_content or b"<html" in low_content:
+                should_force_html = True
+                
+            if should_force_html:
+                content_type = "text/html"
+                print(f"LOG: Preview Proxy [!!!] FORCING HTML MODE")
+
+            # Robust HTML Injection
+            if content_type == "text/html":
                 base_url = "/api/view/{}/{}/".format(container_name, port_num)
                 base_tag = f'<base href="{base_url}">'.encode()
                 
-                # Case-insensitive <head> search
-                head_index = content.lower().find(b"<head>")
-                if head_index != -1:
-                    # Insert after the <head> tag
-                    tag_end = head_index + 6
-                    content = content[:tag_end] + base_tag + content[tag_end:]
+                # Find <head> or <html> tag (case-insensitive)
+                import re
+                head_match = re.search(b'<(head|html)[^>]*>', content, re.IGNORECASE)
+                if head_match:
+                    insert_at = head_match.end()
+                    content = content[:insert_at] + base_tag + content[insert_at:]
                 else:
-                    # Prepend AFTER the doctype if possible, or at the start
-                    doctype_index = content.lower().find(b"<!doctype html>")
-                    if doctype_index != -1:
-                        doc_end = doctype_index + 15
-                        content = content[:doc_end] + base_tag + content[doc_end:]
-                    else:
-                        content = base_tag + content
+                    content = base_tag + content
+
+            # Final Headers: Force the browser's hand
+            final_headers = {
+                "Content-Type": content_type,
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "X-Content-Type-Options": "nosniff"
+            }
+            # Forward other safe headers
+            for k, v in resp.headers.items():
+                lk = k.lower()
+                if lk not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma"]:
+                    final_headers[k] = v
+
+            return Response(content=content, status_code=resp.status_code, headers=final_headers)
 
             # Prepare final headers with Strict Cache-Control
             final_headers = {
