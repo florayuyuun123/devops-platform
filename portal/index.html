@@ -547,8 +547,8 @@ function renderPipeline(stages) {
 function md(t) {
   if (!t) return '';
   
-  // Title Normalization: Strip the first # title if it's identical or similar to the Lab title
-  t = t.replace(/^# .+\n+/, '');
+  // Robust Title Normalization: Trim whitespace and then strip the first # title
+  t = t.trim().replace(/^# .+\n+/, '');
 
   const stash = [];
   // 1. Protect code blocks
@@ -558,12 +558,12 @@ function md(t) {
     return `%%CODE_BLOCK_${i}%%`;
   });
 
-  // 2. Process Alerts: > [!NOTE]
+  // 2. Process Alerts: > [!NOTE] (Handle optional whitespace and multi-line content)
   const alerts = { 'NOTE': 'note', 'TIP': 'tip', 'IMPORTANT': 'important', 'WARNING': 'warning', 'CAUTION': 'warning' };
-  out = out.replace(/^> \[!(\w+)\]\n([\s\S]+?)(?=\n\n|\n>|\n#|$)/gm, (m, type, content) => {
+  out = out.replace(/^> \[!(\w+)\]\r?\n([\s\S]+?)(?=\r?\n\r?\n|\r?\n>|\r?\n#|$)/gm, (m, type, content) => {
     const key = type.toUpperCase();
     const cls = alerts[key] || 'note';
-    return `<div class="markdown-alert markdown-alert-${cls}"><div class="markdown-alert-title">${key}</div>${content.replace(/^> ?/gm, '')}</div>`;
+    return `<div class="markdown-alert markdown-alert-${cls}"><div class="markdown-alert-title">${key}</div>${content.replace(/^> ?/gm, '').trim()}</div>`;
   });
 
   // 3. Process basic markdown

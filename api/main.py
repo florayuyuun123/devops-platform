@@ -114,7 +114,7 @@ def start_sandbox(req: SandboxRequest):
                             lp = os.path.join(LABS_PATH, d)
                             break
                 except: continue
-    cmd = ["docker","run","-d","--name",cn,"--memory","512m","--cpus","0.5","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
+    cmd = ["docker","run","-d","--name",cn,"--memory","2048m","--cpus","2.0","--network","host","-v","/var/run/docker.sock:/var/run/docker.sock","--label","student={}".format(req.student_id),"--label","lab={}".format(req.lab_id)]
     cmd.append("devops-sandbox:latest")
     cmd.extend(["sh", "-c", f"ttyd -p {port} -s 10000 bash --login"])
     
