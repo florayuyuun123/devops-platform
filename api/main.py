@@ -384,7 +384,8 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
             return Response(
                 content=content,
                 status_code=resp.status_code,
-                headers={k: v for k, v in resp.headers.items() if k.lower() not in ["content-length", "content-encoding", "transfer-encoding"]}
+                media_type=content_type,
+                headers={k: v for k, v in resp.headers.items() if k.lower() not in ["content-length", "content-encoding", "transfer-encoding", "content-type"]}
             )
     except Exception as e:
         raise HTTPException(status_code=502, detail="Failed to reach app on {}:{}. Error: {}".format(target_ip, port_num, e))
