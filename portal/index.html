@@ -38,9 +38,12 @@
   .form-group input:focus{outline:none;border-color:var(--accent);background:rgba(0,0,0,0.3);}
 
   #app-screen{flex:1;display:none;position:relative;height:100vh;flex-direction:column;}
-  .main-layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 64px);}
-  .sidebar{width:280px;min-width:280px;background:rgba(15, 17, 23, 0.4);border-right:1px solid var(--border);padding:24px 0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
-  .sidebar-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);padding:0 20px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+  .main-layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 64px);position:relative;}
+  .sidebar{width:280px;min-width:280px;background:rgba(15, 17, 23, 0.4);border-right:1px solid var(--border);padding:24px 0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s;z-index:90;}
+  .sidebar.closed{width:0;min-width:0;overflow:hidden;transform:translateX(-100%);border-right:none;}
+  .sidebar-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);padding:0 20px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+  .sidebar-toggle{cursor:pointer;opacity:0.6;transition:0.2s;font-size:14px;}
+  .sidebar-toggle:hover{opacity:1;color:var(--accent);}
   
   .phase-group{margin:0 12px 4px;border-radius:12px;overflow:hidden;border:1px solid transparent;transition:all 0.2s;}
   .phase-group:hover{background:rgba(255,255,255,0.02);}
@@ -317,6 +320,7 @@ async function loadLabs() {
 }
 
 function renderSidebar() {
+  const isClosed = document.querySelector('.sidebar')?.classList.contains('closed');
   document.getElementById('sidebar-labs').innerHTML = PHASES.map((ph,i) => {
     const labs = allLabs.filter(l => l.id && l.id.startsWith(ph.id));
     const isActive = activePhaseId === ph.id;
@@ -340,6 +344,10 @@ function renderSidebar() {
       </div>
     </div>`;
   }).join('');
+  
+  // Re-inject sidebar label with toggle if needed
+  const label = document.querySelector('.sidebar-label');
+  if (label) label.innerHTML = `Curriculum <span class="sidebar-toggle" onclick="toggleSidebar()">◂</span>`;
 }
 
 let activePhaseId = 'phase-1-linux';
@@ -492,6 +500,10 @@ function renderLab(lab) {
      <div id="pipeline-ui"></div>`;
      if (running) startTimer(activeSandbox.started, activeSandbox.duration || lab.duration_minutes || 60);
      pollProgress(lab.id);
+
+     // Auto-Immersion: Hide sidebar when a lab is opened to give Full Screen workspace
+     const sb = document.querySelector('.sidebar');
+     if (sb && !sb.classList.contains('closed')) toggleSidebar();
 }
 
 let currentTimerContainer = null;
@@ -776,7 +788,11 @@ window.addEventListener('load', () => {
     .addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
 });
 function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('open');
+  const sb = document.querySelector('.sidebar');
+  const btn = document.querySelector('.sidebar-toggle');
+  if (!sb) return;
+  const isClosed = sb.classList.toggle('closed');
+  if (btn) btn.innerHTML = isClosed ? '▸' : '◂';
 }
 </script>
 </body>
