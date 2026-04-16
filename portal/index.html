@@ -62,7 +62,7 @@
   .lab-item.selected::before{background:var(--accent);box-shadow:0 0 8px var(--accent);}
 
   .lab-pane{flex:1;min-width:300px;overflow-y:auto;background:#0f1117;border-right:1px solid var(--border);position:relative;}
-  .content-inner{max-width:1100px;padding:48px 40px;margin:0 auto;}
+  .content-inner{max-width:100%;padding:48px 60px;margin:0;}
 
   /* Standard Vertical Layout (Side by Side Terminal) */
   .terminal-pane{flex:1;min-width:300px;background:#020617;display:none;flex-direction:column;position:relative;}
@@ -556,8 +556,8 @@ function renderPipeline(stages) {
 function md(t) {
   if (!t) return '';
   
-  // Robust Title Normalization: Trim whitespace and then strip the first # title
-  t = t.trim().replace(/^# .+\n+/, '');
+  // Aggressive Title Normalization: Strip the first # title regardless of leading space or line endings
+  t = t.replace(/^\s*# .+(\r?\n)*/, '').trim();
 
   const stash = [];
   // 1. Protect code blocks
