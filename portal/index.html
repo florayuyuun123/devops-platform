@@ -347,11 +347,14 @@ let selectedLabId = null;
 function togglePhase(id) {
   activePhaseId = (activePhaseId === id) ? null : id;
   renderSidebar();
+  if (activePhaseId) showPhase(id);
 }
 
-let activeLab = null;
-
 async function showLab(id) {
+  const lab = allLabs.find(l => l.id === id);
+  if (!lab) return;
+  activeLab = lab;
+  
   document.getElementById('main-content').innerHTML = '<div class="loading"><div class="spinner"></div> Loading lab...</div>';
   
   // 1. Instant Deep Sync (Ensure Stop button visibility accurately)
