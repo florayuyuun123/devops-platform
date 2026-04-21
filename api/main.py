@@ -375,19 +375,21 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
             raw_type = resp.headers.get("content-type", "").lower()
             content_type = raw_type.split(";")[0].strip()
             
-            # Absolute Force-Render Logic
-            should_force_html = False
-            if not content_type or content_type in ["text/plain", "application/octet-stream", "binary/octet-stream"]:
-                should_force_html = True
-            
-            # Double Check: If it clearly looks like HTML, force it.
-            low_content = content.lower()[:1000]
-            if b"<!doctype html" in low_content or b"<html" in low_content:
-                should_force_html = True
-                
-            if should_force_html:
-                content_type = "text/html"
-                print(f"LOG: Preview Proxy [!!!] FORCING HTML MODE")
+            # Universal MIME Intelligence (Nuclear Fix)
+            import mimetypes
+            guessed_type, _ = mimetypes.guess_type(path)
+            if guessed_type:
+                # Force the guessed type for critical assets
+                content_type = guessed_type
+                print(f"LOG: Preview Proxy [!!!] FORCING MIME Type: {content_type}")
+            elif not content_type or content_type in ["text/plain", "application/octet-stream", "binary/octet-stream"]:
+                # Second-tier check for HTML content if no extension exists
+                low_content = content.lower()[:1000]
+                if b"<!doctype html" in low_content or b"<html" in low_content:
+                    content_type = "text/html"
+                    print(f"LOG: Preview Proxy [!!!] FORCING HTML MODE")
+                else:
+                    content_type = "text/html" # Default fallback for preview sub-pages
 
             # Robust HTML Injection
             if content_type == "text/html":
@@ -408,15 +410,17 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
                 "Content-Type": content_type,
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
-                "X-Content-Type-Options": "nosniff",
                 "X-Frame-Options": "ALLOWALL",
                 "Content-Security-Policy": "frame-ancestors *",
                 "Access-Control-Allow-Origin": "*"
             }
+            # Specifically RELAX nosniff to allow browser recovery for lab previews
+            # final_headers["X-Content-Type-Options"] = "nosniff" # REMOVED for Nuclear Fix
+            
             # Forward other safe headers
             for k, v in resp.headers.items():
                 lk = k.lower()
-                if lk not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma", "x-frame-options", "content-security-policy"]:
+                if lk not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma", "x-frame-options", "content-security-policy", "x-content-type-options"]:
                     final_headers[k] = v
 
             return Response(content=content, status_code=resp.status_code, headers=final_headers)
