@@ -391,7 +391,7 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
 
             # Robust HTML Injection
             if content_type == "text/html":
-                base_url = "/api/view/{}/{}/".format(container_name, port_num)
+                base_url = "/view/{}/{}/".format(container_name, port_num)
                 base_tag = f'<base href="{base_url}">'.encode()
                 
                 # Find <head> or <html> tag (case-insensitive)
@@ -408,34 +408,18 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
                 "Content-Type": content_type,
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
-                "X-Content-Type-Options": "nosniff"
+                "X-Content-Type-Options": "nosniff",
+                "X-Frame-Options": "ALLOWALL",
+                "Content-Security-Policy": "frame-ancestors *",
+                "Access-Control-Allow-Origin": "*"
             }
             # Forward other safe headers
             for k, v in resp.headers.items():
                 lk = k.lower()
-                if lk not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma"]:
+                if lk not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma", "x-frame-options", "content-security-policy"]:
                     final_headers[k] = v
 
             return Response(content=content, status_code=resp.status_code, headers=final_headers)
-
-            # Prepare final headers with Strict Cache-Control
-            final_headers = {
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-                "X-Content-Type-Options": "nosniff"
-            }
-            # Forward other safe headers from target
-            for k, v in resp.headers.items():
-                if k.lower() not in ["content-length", "content-encoding", "transfer-encoding", "content-type", "cache-control", "pragma", "expires"]:
-                    final_headers[k] = v
-
-            return Response(
-                content=content,
-                status_code=resp.status_code,
-                media_type=content_type,
-                headers=final_headers
-            )
     except Exception as e:
         raise HTTPException(status_code=502, detail="Failed to reach app on {}:{}. Error: {}".format(target_ip, port_num, e))
 
