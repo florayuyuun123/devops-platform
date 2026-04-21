@@ -43,9 +43,14 @@ EOF
 Automate the 'Build and Push' cycle so that every code change is instantly ready for production.
 
 ### Execution
-Create your `.github/workflows/pipeline.yml`:
+Ensure you are in the project root, create the folder, and save your `.github/workflows/pipeline.yml`:
 
-```yaml
+```bash
+mkdir -p .github/workflows
+```
+
+```bash
+cat > .github/workflows/pipeline.yml << 'EOF'
 name: MS2 E-Commerce CI
 on: [push]
 jobs:
@@ -55,6 +60,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Docker Build
         run: docker build -t ms2-ecommerce ./app
+EOF
 ```
 
 ---
@@ -63,6 +69,14 @@ jobs:
 
 ### The Concept
 Deploy the platform into a Kubernetes cluster using a **ConfigMap** to inject the high-visibility storefront UI.
+
+### Pre-flight Checklist
+Before you deploy, verify your Kubernetes cluster is awake and ready:
+```bash
+minikube status
+```
+> [!TIP]
+> If it says `Stopped`, run `minikube start --driver=docker`.
 
 ### Execution
 
