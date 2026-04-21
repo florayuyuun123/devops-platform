@@ -348,10 +348,11 @@ async def preview_proxy(container_name: str, port_num: int, path: str, request: 
     target_ip = SANDBOX_REGISTRY[container_name].get("k8s_ip")
     if not target_ip:
         try:
-            # Low timeout because if it's not a K8s lab, this will fail or hang
-            r = subprocess.run(["docker","exec",container_name,"minikube","ip"], capture_output=True, text=True, timeout=2)
+            # Increased patience for Kubernetes startups (Bug 2)
+            r = subprocess.run(["docker","exec",container_name,"minikube","ip"], capture_output=True, text=True, timeout=8)
             if r.returncode == 0 and r.stdout.strip():
                 target_ip = r.stdout.strip()
+                # ONLY cache if it's a real IP address, not a fallback
                 SANDBOX_REGISTRY[container_name]["k8s_ip"] = target_ip
                 save_registry()
             else:
