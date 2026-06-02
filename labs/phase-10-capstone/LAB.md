@@ -1,162 +1,171 @@
-# Capstone Project — MS2 E-Commerce Platform
+# Capstone project — deploy a production-grade application
 
-This is the summit of your DevOps journey! You are going to build and deploy a professional **E-Commerce Storefront** using every skill in your arsenal: Docker, CI/CD, and Kubernetes. This is your **Portfolio Masterpiece**.
+## What you are building
+A complete deployment pipeline for a web application that demonstrates
+every skill from this course. This is your portfolio project.
+Show it in every interview.
 
 ---
 
-## Phase A — Repository Architecture
+## The stack you will use
+- **Git** — version control and collaboration
+- **Docker** — containerise the application
+- **GitHub Actions** — CI/CD pipeline
+- **Ansible** — provision and configure the server
+- **Kubernetes** — deploy and scale the application
+- **Prometheus + Grafana** — monitor everything
 
-### The Concept
-Build a modular, enterprise-scale repository to manage the code, automation, and infrastructure.
+---
 
-### Execution
+## Phase A — Set up the repository
 ```bash
-mkdir -p ~/ms2-ecommerce && cd ~/ms2-ecommerce
-mkdir -p app k8s .github/workflows
+git clone https://github.com/YOUR_USERNAME/capstone-devops
+cd capstone-devops
+mkdir -p app ansible k8s monitoring .github/workflows
 ```
 
----
-
-## Phase B — Native Web Delivery (Nginx)
-
-### The Concept
-Instead of a simple script, we use **Nginx**—the industry standard for high-performance web delivery—to serve our storefront.
-
-### Execution
-Create a professional Dockerfile that uses Nginx to serve your platform on **Port 8080**.
-
+## Phase B — Build the application
 ```bash
-cat > app/Dockerfile << 'EOF'
-FROM nginx:alpine
-RUN sed -i 's/listen[[:space:]]*80;/listen 8080;/' /etc/nginx/conf.d/default.conf
-WORKDIR /usr/share/nginx/html
+cat > app/app.py << 'APPEOF'
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json, os, datetime
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.respond({"status": "ok", "time": str(datetime.datetime.now())})
+        elif self.path == '/metrics':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'# HELP requests_total Total requests\n')
+            self.wfile.write(b'requests_total 1\n')
+        else:
+            self.respond({"message": "DevOps Capstone App", "version": "1.0"})
+
+    def respond(self, data):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())
+
+    def log_message(self, fmt, *args):
+        print(f"[{datetime.datetime.now()}] {fmt % args}")
+
+HTTPServer(('', int(os.getenv('PORT', 8080))), Handler).serve_forever()
+APPEOF
+
+cat > app/Dockerfile << 'DFEOF'
+FROM python:3.11-slim
+WORKDIR /app
+COPY app.py .
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
-EOF
+HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost:8080/health || exit 1
+CMD ["python3", "app.py"]
+DFEOF
 ```
 
----
+## Phase C — CI/CD pipeline
+```yaml
+# .github/workflows/pipeline.yml
+name: Full CI/CD Pipeline
 
-## Phase C — Automating the Build (GitHub Actions)
+on:
+  push:
+    branches: [main]
 
-### The Concept
-Automate the 'Build and Push' cycle so that every code change is instantly ready for production.
-
-### Execution
-Ensure you are in the project root, create the folder, and save your `.github/workflows/pipeline.yml`:
-
-```bash
-mkdir -p .github/workflows
-```
-
-```bash
-cat > .github/workflows/pipeline.yml << 'EOF'
-name: MS2 E-Commerce CI
-on: [push]
 jobs:
-  build-and-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Docker Build
-        run: docker build -t ms2-ecommerce ./app
-EOF
+
+      - name: Build image
+        run: docker build -t capstone-app:${{ github.sha }} app/
+
+      - name: Test health endpoint
+        run: |
+          docker run -d -p 8080:8080 --name test-app capstone-app:${{ github.sha }}
+          sleep 3
+          curl -f http://localhost:8080/health
+          docker stop test-app
+
+      - name: Push to registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag capstone-app:${{ github.sha }} ghcr.io/${{ github.repository }}/capstone-app:latest
+          docker push ghcr.io/${{ github.repository }}/capstone-app:latest
 ```
 
+## Phase D — Ansible provisioning
+```yaml
+# ansible/provision.yml
 ---
+- name: Provision application server
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
 
-## Phase D — Production Launch (Kubernetes)
+    - name: Start Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
 
-### The Concept
-Deploy the platform into a Kubernetes cluster using a **ConfigMap** to inject the high-visibility storefront UI.
+    - name: Pull application image
+      command: docker pull ghcr.io/YOUR_USERNAME/capstone-devops/capstone-app:latest
 
-### Pre-flight Checklist
-Before you deploy, verify your Kubernetes cluster is awake and ready:
-```bash
-minikube status
-```
-> [!TIP]
-> If it says `Stopped`, run `minikube start --driver=docker`.
-
-### Execution
-
-1. **The Storefront HTML**: Create the `ecommerce-config.yaml` to hold your professional dashboard.
-```bash
-cat > k8s/ecommerce-config.yaml << 'EOF'
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ecommerce-html
-data:
-  index.html: |
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>MS2 E-Commerce Platform</title>
-        <style>
-            body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-            .card { background: #1e293b; padding: 40px; border-radius: 24px; border: 1px solid #334155; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-            .badge { background: #38bdf8; color: #020617; padding: 4px 12px; border-radius: 99px; font-weight: 700; font-size: 12px; }
-            h1 { margin: 16px 0; font-size: 32px; }
-            .btn { background: #38bdf8; color: #020617; text-decoration: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: inline-block; margin-top: 24px; }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <div class="badge">PRODUCTION READY</div>
-            <h1>MS2 E-Commerce Platform</h1>
-            <p>Powered by Kubernetes & DevOps Automation</p>
-            <a href="#" class="btn" onclick="alert('Order Processed Successfully!')">Place Test Order</a>
-        </div>
-    </body>
-    </html>
-EOF
+    - name: Run application
+      command: >
+        docker run -d
+        --name capstone-app
+        --restart unless-stopped
+        -p 8080:8080
+        ghcr.io/YOUR_USERNAME/capstone-devops/capstone-app:latest
 ```
 
-2. **The Deployment**: Create `k8s/deployment.yaml` and mount the ConfigMap.
-```bash
-cat > k8s/deployment.yaml << 'EOF'
+## Phase E — Kubernetes deployment
+```yaml
+# k8s/deployment.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ecommerce-app
+  name: capstone-app
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: ecommerce
+      app: capstone-app
   template:
     metadata:
       labels:
-        app: ecommerce
+        app: capstone-app
     spec:
       containers:
-      - name: ecommerce
-        image: nginx:alpine
+      - name: capstone-app
+        image: ghcr.io/YOUR_USERNAME/capstone-devops/capstone-app:latest
         ports:
         - containerPort: 8080
-        volumeMounts:
-        - name: html-volume
-          mountPath: /usr/share/nginx/html/index.html
-          subPath: index.html
-      volumes:
-      - name: html-volume
-        configMap:
-          name: ecommerce-html
-EOF
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
 ```
 
-3. **Apply and Expose**:
-```bash
-kubectl apply -f k8s/ecommerce-config.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl expose deployment ecommerce-app --type=NodePort --port=8080
-```
+## Phase F — Submit your project
+Your completed capstone must include:
+- [ ] GitHub repository with all code
+- [ ] Working CI/CD pipeline (green badge in README)
+- [ ] Dockerfile and built image
+- [ ] Ansible playbook for provisioning
+- [ ] Kubernetes manifests
+- [ ] Grafana dashboard screenshot
+- [ ] `README.md` explaining the architecture
 
----
-
-## Final Review
-Click the **🌐 Preview App** button in the dashboard to see your production storefront in action! 
-
-**You have just deployed a professional, high-availability web platform. This is the gold standard for your DevOps portfolio.** 🎓🚀
+**This repository IS your CV.** Share the link in every job application.
